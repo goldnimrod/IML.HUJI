@@ -7,6 +7,7 @@ class UnivariateGaussian:
     """
     Class for univariate Gaussian Distribution Estimator
     """
+
     def __init__(self, biased_var: bool = False) -> UnivariateGaussian:
         """
         Estimator for univariate Gaussian mean and variance parameters
@@ -51,10 +52,28 @@ class UnivariateGaussian:
         Sets `self.mu_`, `self.var_` attributes according to calculated estimation (where
         estimator is either biased or unbiased). Then sets `self.fitted_` attribute to `True`
         """
-        raise NotImplementedError()
+        self.mu_ = X.sum() / len(X)
+        self.var_ = self.get_variance(X)
 
         self.fitted_ = True
         return self
+
+    def get_variance(self, X: np.ndarray):
+        """
+        Calculates the variance whether the estimator is biased
+
+        Parameters
+        ----------
+        X: ndarray of shape (n_samples, )
+            Samples to calculate PDF
+
+        Returns
+        -------
+        The variance
+        """
+        if self.biased_:
+            return sum([(x - self.mu_) ** 2 for x in X]) / len(X)
+        return sum([(x - self.mu_) ** 2 for x in X]) / (len(X) - 1)
 
     def pdf(self, X: np.ndarray) -> np.ndarray:
         """
@@ -75,7 +94,8 @@ class UnivariateGaussian:
         ValueError: In case function was called prior fitting the model
         """
         if not self.fitted_:
-            raise ValueError("Estimator must first be fitted before calling `pdf` function")
+            raise ValueError(
+                "Estimator must first be fitted before calling `pdf` function")
         raise NotImplementedError()
 
     @staticmethod
@@ -104,6 +124,7 @@ class MultivariateGaussian:
     """
     Class for multivariate Gaussian Distribution Estimator
     """
+
     def __init__(self):
         """
         Initialize an instance of multivariate Gaussian estimator
@@ -167,11 +188,13 @@ class MultivariateGaussian:
         ValueError: In case function was called prior fitting the model
         """
         if not self.fitted_:
-            raise ValueError("Estimator must first be fitted before calling `pdf` function")
+            raise ValueError(
+                "Estimator must first be fitted before calling `pdf` function")
         raise NotImplementedError()
 
     @staticmethod
-    def log_likelihood(mu: np.ndarray, cov: np.ndarray, X: np.ndarray) -> float:
+    def log_likelihood(mu: np.ndarray, cov: np.ndarray,
+                       X: np.ndarray) -> float:
         """
         Calculate the log-likelihood of the data under a specified Gaussian model
 
