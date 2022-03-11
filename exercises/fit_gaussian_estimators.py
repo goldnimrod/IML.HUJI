@@ -1,13 +1,19 @@
+import numpy.random
+
 from IMLearn.learners import UnivariateGaussian, MultivariateGaussian
 import numpy as np
 import plotly.graph_objects as go
 import plotly.io as pio
+
 pio.templates.default = "simple_white"
 
 
 def test_univariate_gaussian():
     # Question 1 - Draw samples and print fitted model
-    raise NotImplementedError()
+    samples = numpy.random.normal(10, 1, 1000)
+    estimator = UnivariateGaussian()
+    estimator.fit(samples)
+    print(f"({estimator.mu_, estimator.var_})")
 
     # Question 2 - Empirically showing sample mean is consistent
     raise NotImplementedError()
