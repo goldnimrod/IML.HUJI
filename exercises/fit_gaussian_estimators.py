@@ -9,17 +9,44 @@ pio.templates.default = "simple_white"
 
 
 def test_univariate_gaussian():
+    mu = 10
+    sigma = 1
+
     # Question 1 - Draw samples and print fitted model
-    samples = numpy.random.normal(10, 1, 1000)
-    estimator = UnivariateGaussian()
-    estimator.fit(samples)
+    samples = numpy.random.normal(mu, sigma, 1000)
+    estimator = UnivariateGaussian().fit(samples)
     print(f"({estimator.mu_, estimator.var_})")
 
     # Question 2 - Empirically showing sample mean is consistent
-    raise NotImplementedError()
+    distance_from_mu = []
+    sample_sizes = np.arange(10, 1010, 10)
+    for m in sample_sizes:
+        X = samples[:m + 1]
+        estimator = UnivariateGaussian().fit(X)
+        distance_from_mu.append(abs(estimator.mu_ - mu))
+
+    go.Figure([go.Scatter(x=sample_sizes, y=distance_from_mu,
+                          mode='markers+lines',
+                          name=r'$\widehat\mu$')],
+              layout=go.Layout(
+                  title=r"$\text{(2) Distance from Expectation As Function Of Number Of Samples}$",
+                  xaxis_title="$m\\text{ - number of samples}$",
+                  yaxis_title=r'$\left|\hat\mu-\mu\right|$',
+                  height=500)).show()
 
     # Question 3 - Plotting Empirical PDF of fitted model
-    raise NotImplementedError()
+    pdfs = []
+    for sample in samples:
+        pdfs.append(estimator.pdf(sample))
+
+    go.Figure([go.Scatter(x=samples, y=pdfs,
+                          mode='markers+lines',
+                          name=r'$\widehat\mu$')],
+              layout=go.Layout(
+                  title=r"$\text{(3) PDF As Function Of Sample Value}$",
+                  xaxis_title="$m\\text{ - number of samples}$",
+                  yaxis_title=r'$\left|\hat\mu-\mu\right|$',
+                  height=500)).show()
 
 
 def test_multivariate_gaussian():
