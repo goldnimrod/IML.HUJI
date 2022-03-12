@@ -35,18 +35,17 @@ def test_univariate_gaussian():
                   height=500)).show()
 
     # Question 3 - Plotting Empirical PDF of fitted model
-    pdfs = []
-    for sample in samples:
-        pdfs.append(estimator.pdf(sample))
+    pdf = estimator.pdf(samples)
 
-    go.Figure([go.Scatter(x=samples, y=pdfs,
-                          mode='markers+lines',
+    go.Figure([go.Scatter(x=samples, y=pdf,
+                          mode='markers',
                           name=r'$\widehat\mu$')],
               layout=go.Layout(
                   title=r"$\text{(3) PDF As Function Of Sample Value}$",
-                  xaxis_title="$m\\text{ - number of samples}$",
-                  yaxis_title=r'$\left|\hat\mu-\mu\right|$',
+                  xaxis_title="$m\\text{ - sample value}$",
+                  yaxis_title=r'$\text{PDF}$',
                   height=500)).show()
+    print()
 
 
 def test_multivariate_gaussian():
