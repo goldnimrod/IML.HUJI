@@ -35,7 +35,6 @@ def test_univariate_gaussian():
                   height=500)).show()
 
     # Question 3 - Plotting Empirical PDF of fitted model
-    # samples.sort()
     pdf = estimator.pdf(samples)
 
     go.Figure([go.Scatter(x=samples, y=pdf,
