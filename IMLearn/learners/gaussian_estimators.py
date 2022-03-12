@@ -190,11 +190,17 @@ class MultivariateGaussian:
         covariance: ndarray of shape (X.shape[1], X.shape[1])
             the calculated covariance matrix
         """
+        centered_samples = self.get_centered_sample_matrix(X)
+        return centered_samples.T @ centered_samples / (X.shape[0] - 1)
+
+    def get_centered_sample_matrix(self, X):
+        """
+        @TODO
+        """
         centered_samples = np.zeros(X.shape)
         for i in range(centered_samples.shape[1]):
             centered_samples[:, i] = X - self.mu_
-
-        return centered_samples.T @ centered_samples / X.shape[0]
+        return centered_samples
 
     def pdf(self, X: np.ndarray):
         """
@@ -217,7 +223,11 @@ class MultivariateGaussian:
         if not self.fitted_:
             raise ValueError(
                 "Estimator must first be fitted before calling `pdf` function")
-        raise NotImplementedError()
+        centered_samples = self.get_centered_sample_matrix(X)
+
+        return math.exp(-0.5 * centered_samples.T @ np.linalg.inv(
+            self.cov_) @ centered_samples) / math.sqrt(
+            np.linalg.det(self.cov_) * (2 * math.pi) ** X.shape[1])
 
     @staticmethod
     def log_likelihood(mu: np.ndarray, cov: np.ndarray,
