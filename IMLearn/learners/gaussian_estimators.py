@@ -55,7 +55,7 @@ class UnivariateGaussian:
         Sets `self.mu_`, `self.var_` attributes according to calculated estimation (where
         estimator is either biased or unbiased). Then sets `self.fitted_` attribute to `True`
         """
-        self.mu_ = X.sum() / X.size
+        self.mu_ = X.mean()
         self.var_ = self.get_variance(X)
 
         self.fitted_ = True
@@ -68,11 +68,12 @@ class UnivariateGaussian:
         Parameters
         ----------
         X: ndarray of shape (n_samples, )
-            Samples to calculate PDF
+            Training data
 
         Returns
         -------
-        The variance
+        variance: float
+            the calculated variance
         """
         if self.biased_:
             return sum([(x - self.mu_) ** 2 for x in X]) / X.size
@@ -169,10 +170,31 @@ class MultivariateGaussian:
         Sets `self.mu_`, `self.cov_` attributes according to calculated estimation.
         Then sets `self.fitted_` attribute to `True`
         """
-        raise NotImplementedError()
+        self.mu_ = np.mean(X, axis=1)
+        self.cov_ = self.get_covariance()
 
         self.fitted_ = True
         return self
+
+    def get_covariance(self, X: np.ndarray):
+        """
+        Calculates the covariance matrix, whether the estimator is biased
+
+        Parameters
+        ----------
+        X: ndarray of shape (n_samples, n_features)
+            Training data
+
+        Returns
+        -------
+        covariance: ndarray of shape (X.shape[1], X.shape[1])
+            the calculated covariance matrix
+        """
+        centered_samples = np.zeros(X.shape)
+        for i in range(centered_samples.shape[1]):
+            centered_samples[:, i] = X - self.mu_
+
+        return centered_samples.T @ centered_samples / X.shape[0]
 
     def pdf(self, X: np.ndarray):
         """
