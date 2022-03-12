@@ -123,7 +123,7 @@ class UnivariateGaussian:
             log-likelihood calculated
         """
         return (math.log(1 / math.pow(2 * math.pi * sigma, X.size / 2)) -
-                1 / 2 * sigma * sum([(x - mu) ** 2 for x in X]))
+                0.5 * sigma * sum([(x - mu) ** 2 for x in X]))
 
 
 class MultivariateGaussian:
@@ -193,9 +193,19 @@ class MultivariateGaussian:
         centered_samples = self.get_centered_sample_matrix(X)
         return centered_samples.T @ centered_samples / (X.shape[0] - 1)
 
-    def get_centered_sample_matrix(self, X):
+    def get_centered_sample_matrix(self, X: np.ndarray):
         """
-        @TODO
+        Calculates the centered samples matrix, according to mu_
+
+        Parameters
+        ----------
+        X: ndarray of shape (n_samples, n_features)
+            Training data
+
+        Returns
+        -------
+        centered_samples: ndarray of shape (n_samples, n_features)
+            the centered samples matrix
         """
         centered_samples = np.zeros(X.shape)
         for i in range(centered_samples.shape[1]):
@@ -249,4 +259,8 @@ class MultivariateGaussian:
         log_likelihood: float
             log-likelihood calculated
         """
-        raise NotImplementedError()
+        return (math.log(
+            1 / math.pow(np.linalg.det(cov) * (2 * math.pi) ** X.shape[1],
+                         X.shape[0] / 2)) -
+                0.5 * sum(
+                    [(x - mu).T @ np.linalg.inv(cov) @ (x - mu) for x in X]))
