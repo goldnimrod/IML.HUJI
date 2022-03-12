@@ -45,7 +45,6 @@ def test_univariate_gaussian():
                   xaxis_title="$\\text{sample value}$",
                   yaxis_title=r'$\text{PDF}$',
                   height=500)).show()
-    print()
 
 
 def test_multivariate_gaussian():
