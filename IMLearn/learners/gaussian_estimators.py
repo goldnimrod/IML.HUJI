@@ -261,7 +261,7 @@ class MultivariateGaussian:
         log_likelihood: float
             log-likelihood calculated over all input data and under given parameters of Gaussian
         """
-        sign, cov_logdet = slogdet(cov)
+        cov_logdet = slogdet(cov)[1]
         cov_inv = inv(cov)
         for x in X:
             centered_sample = x - mu
