@@ -61,7 +61,14 @@ def test_multivariate_gaussian():
     print(estimator.cov_)
 
     # Question 5 - Likelihood evaluation
-    raise NotImplementedError()
+    mu_values = np.array(
+        np.meshgrid(np.linspace(-10, 10, 200), [0], np.linspace(-10, 10, 200),
+                    [0])).T.reshape(-1, 4)
+    log_likelihoods = [MultivariateGaussian.log_likelihood(mu, sigma, samples)
+                       for mu in mu_values]
+    go.Figure(
+        go.Heatmap(x=mu_values[:, 2], y=mu_values[:, 0], z=log_likelihoods),
+        layout=go.Layout(title="Hi", height=300, width=200)).show()
 
     # Question 6 - Maximum likelihood
     raise NotImplementedError()
