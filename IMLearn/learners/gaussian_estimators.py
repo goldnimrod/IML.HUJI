@@ -170,8 +170,8 @@ class MultivariateGaussian:
         Sets `self.mu_`, `self.cov_` attributes according to calculated estimation.
         Then sets `self.fitted_` attribute to `True`
         """
-        self.mu_ = np.mean(X, axis=1)
-        self.cov_ = self.get_covariance()
+        self.mu_ = np.mean(X, axis=0)
+        self.cov_ = self.get_covariance(X)
 
         self.fitted_ = True
         return self
@@ -208,8 +208,8 @@ class MultivariateGaussian:
             the centered samples matrix
         """
         centered_samples = np.zeros(X.shape)
-        for i in range(centered_samples.shape[1]):
-            centered_samples[:, i] = X - self.mu_
+        for i in range(centered_samples.shape[0]):
+            centered_samples[i, :] = X[i, :] - self.mu_
         return centered_samples
 
     def pdf(self, X: np.ndarray):
