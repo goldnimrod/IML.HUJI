@@ -57,7 +57,8 @@ def test_multivariate_gaussian():
     samples = numpy.random.multivariate_normal(mu, sigma, 1000)
     estimator = MultivariateGaussian().fit(samples)
 
-    print(estimator.mu_, estimator.cov_)
+    print(estimator.mu_)
+    print(estimator.cov_)
 
     # Question 5 - Likelihood evaluation
     raise NotImplementedError()
