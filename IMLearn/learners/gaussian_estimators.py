@@ -233,11 +233,14 @@ class MultivariateGaussian:
         if not self.fitted_:
             raise ValueError(
                 "Estimator must first be fitted before calling `pdf` function")
-        centered_samples = self.get_centered_sample_matrix(X)
+        pdfs = np.zeros(X.shape[0])
 
-        return math.exp(-0.5 * centered_samples.T @ np.linalg.inv(
-            self.cov_) @ centered_samples) / math.sqrt(
-            np.linalg.det(self.cov_) * (2 * math.pi) ** X.shape[1])
+        for i, x in enumerate(X):
+            pdfs[i] = math.exp(-0.5 * x.T @ np.linalg.inv(
+                self.cov_) @ x) / math.sqrt(
+                np.linalg.det(self.cov_) * (2 * math.pi) ** X.shape[1])
+
+        return pdfs
 
     @staticmethod
     def log_likelihood(mu: np.ndarray, cov: np.ndarray,
