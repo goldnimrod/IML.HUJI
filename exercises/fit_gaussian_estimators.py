@@ -15,7 +15,7 @@ def test_univariate_gaussian():
     # Question 1 - Draw samples and print fitted model
     samples = numpy.random.normal(mu, sigma, 1000)
     estimator = UnivariateGaussian().fit(samples)
-    print(f"({estimator.mu_, estimator.var_})")
+    print(f"Q1: {estimator.mu_, estimator.var_}")
 
     # Question 2 - Empirically showing sample mean is consistent
     distance_from_mu = []
@@ -54,24 +54,33 @@ def test_multivariate_gaussian():
                       [0, 0, 1, 0],
                       [0.5, 0, 0, 1]])
     # Question 4 - Draw samples and print fitted model
-    samples = numpy.random.multivariate_normal(mu, sigma, 1000)
+    samples = np.random.multivariate_normal(mu, sigma, 1000)
     estimator = MultivariateGaussian().fit(samples)
 
-    print(estimator.mu_)
-    print(estimator.cov_)
+    print("Q4:")
+    print(f"mu: {estimator.mu_}")
+    print(f"cov: {estimator.cov_}")
 
     # Question 5 - Likelihood evaluation
-    mu_values = np.array(
+    models = np.array(
         np.meshgrid(np.linspace(-10, 10, 200), [0], np.linspace(-10, 10, 200),
                     [0])).T.reshape(-1, 4)
     log_likelihoods = [MultivariateGaussian.log_likelihood(mu, sigma, samples)
-                       for mu in mu_values]
+                       for mu in models]
     go.Figure(
-        go.Heatmap(x=mu_values[:, 2], y=mu_values[:, 0], z=log_likelihoods),
-        layout=go.Layout(title="Hi", height=300, width=200)).show()
+        go.Heatmap(x=models[:, 2], y=models[:, 0], z=log_likelihoods),
+        layout=go.Layout(
+            title=r"$\text{(5) Heatmap of log-likelihood according to }\mu$",
+            xaxis_title="$f_{3}$",
+            yaxis_title=r'$f_{1}$',
+            height=500, width=500)).show()
 
     # Question 6 - Maximum likelihood
-    raise NotImplementedError()
+    max_index = numpy.argmax(log_likelihoods)
+    print("Q6: ")
+    print(
+        f"model with max log-likelihood: {models[max_index]}")
+    print(f"log-likelihood value of the model: {log_likelihoods[max_index]}")
 
 
 if __name__ == '__main__':

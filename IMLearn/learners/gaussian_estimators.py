@@ -236,9 +236,8 @@ class MultivariateGaussian:
         pdfs = np.zeros(X.shape[0])
 
         for i, x in enumerate(X):
-            pdfs[i] = math.exp(-0.5 * x.T @ np.linalg.inv(
-                self.cov_) @ x) / math.sqrt(
-                np.linalg.det(self.cov_) * (2 * math.pi) ** X.shape[1])
+            pdfs[i] = math.exp(-0.5 * x.T @ inv(self.cov_) @ x) / math.sqrt(
+                det(self.cov_) * (2 * math.pi) ** X.shape[1])
 
         return pdfs
 
@@ -262,8 +261,10 @@ class MultivariateGaussian:
         log_likelihood: float
             log-likelihood calculated
         """
-        return (math.log(
-            1 / math.pow(np.linalg.det(cov) * (2 * math.pi) ** X.shape[1],
-                         X.shape[0] / 2)) -
-                0.5 * sum(
-                    [(x - mu).T @ np.linalg.inv(cov) @ (x - mu) for x in X]))
+        sign, cov_logdet = slogdet(cov)
+        cov_inv = inv(cov)
+        for x in X:
+            centered_sample = x - mu
+            centered_sum = sum([centered_sample.T @ cov_inv @ centered_sample])
+        return -0.5 * (X.shape[1] * (X.shape[0] * math.log(
+            2 * math.pi) + cov_logdet) + centered_sum)
