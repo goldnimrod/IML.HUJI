@@ -56,28 +56,13 @@ class UnivariateGaussian:
         estimator is either biased or unbiased). Then sets `self.fitted_` attribute to `True`
         """
         self.mu_ = X.mean()
-        self.var_ = self.get_variance(X)
+        if self.biased_:
+            self.var_ = np.var(X)
+        else:
+            self.var_ = np.var(X, ddof=1)
 
         self.fitted_ = True
         return self
-
-    def get_variance(self, X: np.ndarray):
-        """
-        Calculates the variance whether the estimator is biased
-
-        Parameters
-        ----------
-        X: ndarray of shape (n_samples, )
-            Training data
-
-        Returns
-        -------
-        variance: float
-            the calculated variance
-        """
-        if self.biased_:
-            return sum([(x - self.mu_) ** 2 for x in X]) / X.size
-        return sum([(x - self.mu_) ** 2 for x in X]) / (X.size - 1)
 
     def pdf(self, X: np.ndarray) -> np.ndarray:
         """
