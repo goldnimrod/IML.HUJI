@@ -108,7 +108,7 @@ class UnivariateGaussian:
             log-likelihood calculated
         """
         return (math.log(1 / math.pow(2 * math.pi * sigma, X.size / 2)) -
-                0.5 * sigma * sum([(x - mu) ** 2 for x in X]))
+                (sum([(x - mu) ** 2 for x in X])) / (2 * sigma))
 
 
 class MultivariateGaussian:
@@ -248,8 +248,9 @@ class MultivariateGaussian:
         """
         cov_logdet = slogdet(cov)[1]
         cov_inv = inv(cov)
+        temp_sum = 0
         for x in X:
             centered_sample = x - mu
-            centered_sum = sum([centered_sample.T @ cov_inv @ centered_sample])
+            temp_sum += centered_sample.T @ cov_inv @ centered_sample
         return -0.5 * (X.shape[1] * (X.shape[0] * math.log(
-            2 * math.pi) + cov_logdet) + centered_sum)
+            2 * math.pi) + cov_logdet) + temp_sum)
