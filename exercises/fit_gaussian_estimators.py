@@ -66,8 +66,9 @@ def test_multivariate_gaussian():
     models = np.array(
         np.meshgrid(np.linspace(-10, 10, 200), [0], np.linspace(-10, 10, 200),
                     [0])).T.reshape(-1, 4)
-    log_likelihoods = [MultivariateGaussian.log_likelihood(mu, sigma, samples)
-                       for mu in models]
+    log_likelihoods = np.apply_along_axis(
+        lambda mu_val: MultivariateGaussian.log_likelihood(mu_val, sigma,
+                                                           samples), 1, models)
     go.Figure(
         go.Heatmap(x=models[:, 2], y=models[:, 0], z=log_likelihoods),
         layout=go.Layout(

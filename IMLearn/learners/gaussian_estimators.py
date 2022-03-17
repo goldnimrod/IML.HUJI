@@ -175,31 +175,8 @@ class MultivariateGaussian:
         covariance: ndarray of shape (X.shape[1], X.shape[1])
             the calculated covariance matrix
         """
-        centered_samples = MultivariateGaussian.get_centered_sample_matrix(X,
-                                                                           self.mu_)
+        centered_samples = X - self.mu_
         return centered_samples.T @ centered_samples / (X.shape[0] - 1)
-
-    @staticmethod
-    def get_centered_sample_matrix(X: np.ndarray, mu: np.ndarray):
-        """
-        Calculates the centered samples matrix, according to mu_
-
-        Parameters
-        ----------
-        X: ndarray of shape (n_samples, n_features)
-            Training data
-        mu: ndarray of shape (n_features)
-            Expectation of Gaussian
-
-        Returns
-        -------
-        centered_samples: ndarray of shape (n_samples, n_features)
-            the centered samples matrix
-        """
-        centered_samples = np.zeros(X.shape)
-        for i in range(centered_samples.shape[0]):
-            centered_samples[i, :] = X[i, :] - mu
-        return centered_samples
 
     def pdf(self, X: np.ndarray):
         """
@@ -252,8 +229,7 @@ class MultivariateGaussian:
         """
         cov_logdet = slogdet(cov)[1]
         cov_inv = inv(cov)
-        centered_samples = MultivariateGaussian.get_centered_sample_matrix(X,
-                                                                           mu)
+        centered_samples = X - mu
         quadratic_sum = np.sum(centered_samples @ cov_inv * centered_samples)
         return -0.5 * (X.shape[1] * (X.shape[0] * math.log(
             2 * math.pi) + cov_logdet) + quadratic_sum)
