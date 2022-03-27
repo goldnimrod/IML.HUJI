@@ -8,6 +8,10 @@ import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
 
+LAST_RENOV_AGE = "last_renov_age"
+RENOVATED = "renovated"
+HOUSE_AGE = "house_age"
+
 pio.templates.default = "simple_white"
 
 MIN_SQUARE_FOOTAGE = 120
@@ -49,13 +53,13 @@ def load_data(filename: str):
     DataFrame or a Tuple[DataFrame, Series]
     """
     df = get_valid_df(filename)
-    df["house_age"] = pd.DatetimeIndex(df.date).year - df.yr_built
-    df["renovated"] = np.where(df.yr_renovated > 0, 1, 0)
-    df["last_renov_age"] = np.where(df.yr_renovated > 0, pd.DatetimeIndex(
-        df.date).year - df.yr_renovated, df["house_age"])
+    df[HOUSE_AGE] = pd.DatetimeIndex(df.date).year - df.yr_built
+    df[RENOVATED] = np.where(df.yr_renovated > 0, 1, 0)
+    df[LAST_RENOV_AGE] = np.where(df.yr_renovated > 0, pd.DatetimeIndex(
+        df.date).year - df.yr_renovated, df[HOUSE_AGE])
 
     df = df.drop(columns=FILTERED_COLS)
-    return df
+    return df.drop(columns=["price"]), df.price
 
 
 def feature_evaluation(X: pd.DataFrame, y: pd.Series,
@@ -82,7 +86,7 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series,
 if __name__ == '__main__':
     np.random.seed(0)
     # Question 1 - Load and preprocessing of housing prices dataset
-    processed_data = load_data("../datasets/house_prices.csv")
+    X, y = load_data("../datasets/house_prices.csv")
 
     # Question 2 - Feature evaluation with respect to response
     raise NotImplementedError()
