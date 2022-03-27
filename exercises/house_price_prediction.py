@@ -8,15 +8,19 @@ import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
 
+pio.templates.default = "simple_white"
+
+ZIPCODE_SCORE = "zipcode_score"
+ZIPCODE = 'zipcode'
+PRICE = "price"
 LAST_RENOV_AGE = "last_renov_age"
 RENOVATED = "renovated"
 HOUSE_AGE = "house_age"
 
-pio.templates.default = "simple_white"
-
 MIN_SQUARE_FOOTAGE = 120
 MIN_YEAR = 1900
-FILTERED_COLS = ["id", "lat", "long", "date", "yr_built", "yr_renovated"]
+FILTERED_COLS = ["id", "lat", "long", "date", "yr_built", "yr_renovated",
+                 "zipcode"]
 
 
 def get_valid_df(filename):
@@ -34,7 +38,7 @@ def get_valid_df(filename):
     """
     df = pd.read_csv(filename)
     df.date = pd.to_datetime(df.date, errors='coerce')
-    return df[(df.id > 0) & (df.price > 0) & (
+    return df[(df.id > 0) & (df.price > 0) & (df.bedrooms > 0) & (
             (df.yr_renovated == 0) | (df.yr_renovated >= MIN_YEAR)) &
               (df.sqft_living >= MIN_SQUARE_FOOTAGE)].dropna()
 
@@ -53,13 +57,52 @@ def load_data(filename: str):
     DataFrame or a Tuple[DataFrame, Series]
     """
     df = get_valid_df(filename)
+    df = add_age_features(df)
+    df = add_zipcode_score(df)
+    df = df.drop(columns=FILTERED_COLS)
+
+    return df.drop(columns=[PRICE]), df.price
+
+
+def add_zipcode_score(df: pd.DataFrame):
+    """
+        Adds zipcode score (mean price) feature to DataFrame
+        Parameters
+        ----------
+        df: pd.DataFrame
+            DataFrame to work on
+
+        Returns
+        -------
+        df: pd.DataFrame
+            DataFrame with added zipcode score (mean price in zipcode)
+        """
+    zipcode_mean_price = df.groupby(ZIPCODE).mean()[[PRICE]].rename(
+        columns={PRICE: ZIPCODE_SCORE})
+    zipcode_mean_price.reset_index(inplace=True)
+    zipcode_mean_price = zipcode_mean_price[[ZIPCODE, ZIPCODE_SCORE]]
+    df = pd.merge(df, zipcode_mean_price, on=ZIPCODE, how='left')
+    return df
+
+
+def add_age_features(df: pd.DataFrame):
+    """
+    Adds house age and renovation features
+    Parameters
+    ----------
+    df: pd.DataFrame
+        DataFrame to work on
+
+    Returns
+    -------
+    df: pd.DataFrame
+        DataFrame with added features of house age and renovation age
+    """
     df[HOUSE_AGE] = pd.DatetimeIndex(df.date).year - df.yr_built
     df[RENOVATED] = np.where(df.yr_renovated > 0, 1, 0)
     df[LAST_RENOV_AGE] = np.where(df.yr_renovated > 0, pd.DatetimeIndex(
         df.date).year - df.yr_renovated, df[HOUSE_AGE])
-
-    df = df.drop(columns=FILTERED_COLS)
-    return df.drop(columns=["price"]), df.price
+    return df
 
 
 def feature_evaluation(X: pd.DataFrame, y: pd.Series,
