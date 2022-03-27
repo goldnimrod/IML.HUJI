@@ -7,7 +7,32 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
+
 pio.templates.default = "simple_white"
+
+MIN_SQUARE_FOOTAGE = 120
+MIN_YEAR = 1900
+FILTERED_COLS = ["id", "lat", "long", "date", "yr_built", "yr_renovated"]
+
+
+def get_valid_df(filename):
+    """
+    Returns a valid DataFrame from the csv while removing
+    rows with invalid features
+    Parameters
+    ----------
+    filename: str
+        Path to house prices dataset
+
+    Returns
+    -------
+    DataFrame that includes only valid rows
+    """
+    df = pd.read_csv(filename)
+    df.date = pd.to_datetime(df.date, errors='coerce')
+    return df[(df.id > 0) & (df.price > 0) & (
+            (df.yr_renovated == 0) | (df.yr_renovated >= MIN_YEAR)) &
+              (df.sqft_living >= MIN_SQUARE_FOOTAGE)].dropna()
 
 
 def load_data(filename: str):
@@ -23,10 +48,18 @@ def load_data(filename: str):
     Design matrix and response vector (prices) - either as a single
     DataFrame or a Tuple[DataFrame, Series]
     """
-    raise NotImplementedError()
+    df = get_valid_df(filename)
+    df["house_age"] = pd.DatetimeIndex(df.date).year - df.yr_built
+    df["renovated"] = np.where(df.yr_renovated > 0, 1, 0)
+    df["last_renov_age"] = np.where(df.yr_renovated > 0, pd.DatetimeIndex(
+        df.date).year - df.yr_renovated, df["house_age"])
+
+    df = df.drop(columns=FILTERED_COLS)
+    return df
 
 
-def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") -> NoReturn:
+def feature_evaluation(X: pd.DataFrame, y: pd.Series,
+                       output_path: str = ".") -> NoReturn:
     """
     Create scatter plot between each feature and the response.
         - Plot title specifies feature name
@@ -49,7 +82,7 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
 if __name__ == '__main__':
     np.random.seed(0)
     # Question 1 - Load and preprocessing of housing prices dataset
-    raise NotImplementedError()
+    processed_data = load_data("../datasets/house_prices.csv")
 
     # Question 2 - Feature evaluation with respect to response
     raise NotImplementedError()
