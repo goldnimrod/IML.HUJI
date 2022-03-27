@@ -1,3 +1,5 @@
+import os.path
+
 from IMLearn.utils import split_train_test
 from IMLearn.learners.regressors import LinearRegression
 
@@ -18,7 +20,6 @@ RENOVATED = "renovated"
 HOUSE_AGE = "house_age"
 
 MIN_SQUARE_FOOTAGE = 120
-MIN_YEAR = 1900
 FILTERED_COLS = ["id", "lat", "long", "date", "yr_built", "yr_renovated",
                  "zipcode"]
 
@@ -39,7 +40,8 @@ def get_valid_df(filename):
     df = pd.read_csv(filename)
     df.date = pd.to_datetime(df.date, errors='coerce')
     return df[(df.id > 0) & (df.price > 0) & (df.bedrooms > 0) & (
-            (df.yr_renovated == 0) | (df.yr_renovated >= MIN_YEAR)) &
+            df.yr_built > 0) & ((df.yr_renovated == 0) | (
+            df.yr_renovated >= df.yr_built)) &
               (df.sqft_living >= MIN_SQUARE_FOOTAGE)].dropna()
 
 
@@ -123,7 +125,19 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series,
     output_path: str (default ".")
         Path to folder in which plots are saved
     """
-    raise NotImplementedError()
+    for feature in X:
+        feature_data = X[feature]
+        cov = np.cov(feature_data, y)
+        pearson_corr = cov[0][1] / (
+                np.sqrt(cov[0][0]) * np.sqrt(cov[1][1]))
+        # go.Figure([go.Scatter(x=feature_data, y=y,
+        #                       mode='markers')],
+        #           layout=go.Layout(
+        #               title=f"$\\text{{price as a function of {feature} - Corr =}} {pearson_corr}$",
+        #               xaxis_title=f"$\\text{{{feature}}}$",
+        #               yaxis_title=r"$\text{price}$",
+        #               height=500)).write_image(
+        #     os.path.join(output_path, f"{feature}.png"))
 
 
 if __name__ == '__main__':
@@ -132,10 +146,10 @@ if __name__ == '__main__':
     X, y = load_data("../datasets/house_prices.csv")
 
     # Question 2 - Feature evaluation with respect to response
-    raise NotImplementedError()
+    feature_evaluation(X, y)
 
     # Question 3 - Split samples into training- and testing sets.
-    raise NotImplementedError()
+    train_X, train_y, test_X, test_y = split_train_test(X, y)
 
     # Question 4 - Fit model over increasing percentages of the overall training data
     # For every percentage p in 10%, 11%, ..., 100%, repeat the following 10 times:
