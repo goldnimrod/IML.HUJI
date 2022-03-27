@@ -130,14 +130,14 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series,
         cov = np.cov(feature_data, y)
         pearson_corr = cov[0][1] / (
                 np.sqrt(cov[0][0]) * np.sqrt(cov[1][1]))
-        # go.Figure([go.Scatter(x=feature_data, y=y,
-        #                       mode='markers')],
-        #           layout=go.Layout(
-        #               title=f"$\\text{{price as a function of {feature} - Corr =}} {pearson_corr}$",
-        #               xaxis_title=f"$\\text{{{feature}}}$",
-        #               yaxis_title=r"$\text{price}$",
-        #               height=500)).write_image(
-        #     os.path.join(output_path, f"{feature}.png"))
+        go.Figure([go.Scatter(x=feature_data, y=y,
+                              mode='markers')],
+                  layout=go.Layout(
+                      title=f"$\\text{{price as a function of {feature} - Corr =}} {pearson_corr}$",
+                      xaxis_title=f"$\\text{{{feature}}}$",
+                      yaxis_title=r"$\text{price}$",
+                      height=500)).write_image(
+            os.path.join(output_path, f"{feature}.png"))
 
 
 if __name__ == '__main__':
