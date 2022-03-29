@@ -42,7 +42,7 @@ def get_valid_df(filename):
     df.date = pd.to_datetime(df.date, errors='coerce')
     return df[(df.id > 0) & (df.price > 0) & (df.bedrooms > 0) & (
             df.yr_built > 0) & ((df.yr_renovated == 0) | (
-            df.yr_renovated >= df.yr_built)) &
+                df.yr_renovated >= df.yr_built)) &
               (df.sqft_living >= MIN_SQUARE_FOOTAGE)].dropna()
 
 
