@@ -147,7 +147,7 @@ if __name__ == '__main__':
     X, y = load_data("../datasets/house_prices.csv")
 
     # Question 2 - Feature evaluation with respect to response
-    feature_evaluation(X, y)
+    # feature_evaluation(X, y)
 
     # Question 3 - Split samples into training- and testing sets.
     train_X, train_y, test_X, test_y = split_train_test(X, y)
@@ -162,7 +162,7 @@ if __name__ == '__main__':
     # set Then plot average loss as function of training size with error
     # ribbon of size (mean-2*std, mean+2*std)
     mean_losses = []
-    var_losses = []
+    std_losses = []
     percents = np.linspace(10, 100, 91)
     for p in percents:
         losses = []
@@ -175,18 +175,18 @@ if __name__ == '__main__':
             losses.append(
                 estimator.loss(test_X.to_numpy(), test_y.to_numpy()))
         mean_losses.append(np.mean(losses))
-        var_losses.append(np.sqrt(np.var(losses)))
+        std_losses.append(np.std(losses))
     mean_losses = np.array(mean_losses)
-    var_losses = np.array(var_losses)
+    std_losses = np.array(std_losses)
 
     go.Figure([go.Scatter(x=percents, y=mean_losses,
                           mode='markers',
                           name='Mean Loss'),
-               go.Scatter(x=percents, y=mean_losses - 2 * var_losses,
+               go.Scatter(x=percents, y=mean_losses - 2 * std_losses,
                           fill=None,
                           mode="lines", line=dict(color="lightgrey"),
                           showlegend=False),
-               go.Scatter(x=percents, y=mean_losses + 2 * var_losses,
+               go.Scatter(x=percents, y=mean_losses + 2 * std_losses,
                           fill='tonexty', mode="lines",
                           line=dict(color="lightgrey"),
                           showlegend=False)],
