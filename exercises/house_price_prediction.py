@@ -42,7 +42,7 @@ def get_valid_df(filename):
     df.date = pd.to_datetime(df.date, errors='coerce')
     return df[(df.id > 0) & (df.price > 0) & (df.bedrooms > 0) & (
             df.yr_built > 0) & ((df.yr_renovated == 0) | (
-                df.yr_renovated >= df.yr_built)) &
+            df.yr_renovated >= df.yr_built)) &
               (df.sqft_living >= MIN_SQUARE_FOOTAGE)].dropna()
 
 
@@ -127,19 +127,18 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series,
         Path to folder in which plots are saved
     """
     for feature in X:
-        feature_data = X[feature]
-        cov = np.cov(feature_data, y)
+        # feature_data = X[feature]
+        cov = np.cov(X[feature], y)
         pearson_corr = cov[0][1] / (
                 np.sqrt(cov[0][0]) * np.sqrt(cov[1][1]))
-        go.Figure([go.Scatter(x=feature_data, y=y,
-                              mode='markers')],
-                  layout=go.Layout(
-                      title=f"$\\text{{price as a function of {feature} - }}"
-                            f"\\rho = {pearson_corr}$",
-                      xaxis_title=f"$\\text{{{feature}}}$",
-                      yaxis_title=r"$\text{price}$",
-                      height=500)).write_image(
-            os.path.join(output_path, f"{feature}.png"))
+        fig = px.scatter(X, x=feature, y=y)
+        fig.layout = go.Layout(
+            title=f"$\\text{{price as a function of {feature} - }}"
+                  f"\\rho = {pearson_corr}$",
+            xaxis_title=f"$\\text{{{feature}}}$",
+            yaxis_title=r"$\text{price}$",
+            height=500)
+        fig.write_image(os.path.join(output_path, f"{feature}.png"))
 
 
 if __name__ == '__main__':
