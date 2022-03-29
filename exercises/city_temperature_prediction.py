@@ -6,7 +6,36 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import plotly.io as pio
+
+TEMP = "Temp"
+
+MAX_TEMP = 56.7
+MIN_TEMP = -89.2
+MAX_DAY = 31
+MAX_MONTH = 12
+
 pio.templates.default = "simple_white"
+
+
+def get_valid_df(filename):
+    """
+    Returns a valid DataFrame from the csv while removing
+    rows with invalid features
+    Parameters
+    ----------
+    filename: str
+        Path to temperature dataset
+
+    Returns
+    -------
+    DataFrame that includes only valid rows
+    """
+    df = pd.read_csv(filename)
+    df.date = pd.to_datetime(df.Date, errors='coerce')
+    return df[
+        (1 <= df.Month) & (df.Month <= MAX_MONTH) & (1 <= df.Day) & (
+                df.Day <= MAX_DAY) & (df.Temp >= MIN_TEMP) & (
+                df.Temp <= MAX_TEMP)].dropna()
 
 
 def load_data(filename: str) -> pd.DataFrame:
@@ -15,19 +44,21 @@ def load_data(filename: str) -> pd.DataFrame:
     Parameters
     ----------
     filename: str
-        Path to house prices dataset
+        Path to temperature dataset
 
     Returns
     -------
     Design matrix and response vector (Temp)
     """
-    raise NotImplementedError()
+    df = get_valid_df(filename)
+    df["DayOfYear"] = pd.DatetimeIndex(df.Date).dayofyear
+    return df
 
 
 if __name__ == '__main__':
     np.random.seed(0)
     # Question 1 - Load and preprocessing of city temperature dataset
-    raise NotImplementedError()
+    data = load_data("../datasets/City_Temperature.csv")
 
     # Question 2 - Exploring data for specific country
     raise NotImplementedError()
