@@ -8,9 +8,7 @@ import plotly.express as px
 import plotly.io as pio
 
 COUNTRY = "Country"
-
 MONTH = "Month"
-
 YEAR = "Year"
 
 pio.templates.default = "simple_white"
@@ -70,6 +68,7 @@ if __name__ == '__main__':
 
     # Question 2 - Exploring data for specific country
     israel_data = dataset[dataset.Country == "Israel"].copy()
+    israel_data.reset_index(drop=True, inplace=True)
     israel_data.Year = israel_data.Year.astype(str)
 
     # Temp as a function of day of year
@@ -78,6 +77,7 @@ if __name__ == '__main__':
                            r"Day Of Year",
                      width=1000, height=500)
     fig.show()
+    israel_data.Year = israel_data.Year.astype(int)
 
     # Std as a function of month
     israel_monthly = israel_data[[MONTH, TEMP]].groupby(MONTH)
@@ -101,7 +101,39 @@ if __name__ == '__main__':
     fig.show()
 
     # Question 4 - Fitting model for different values of `k`
-    raise NotImplementedError()
+    train_X, train_y, test_X, test_y = split_train_test(
+        israel_data[DAY_OF_YEAR].to_frame(), israel_data.Temp)
+    test_errors = []
+    for k in range(1, 11):
+        poly = PolynomialFitting(k)
+        poly.fit(train_X.to_numpy(), train_y.to_numpy())
+        loss = np.round(poly.loss(test_X.to_numpy(), test_y.to_numpy()), 2)
+        test_errors.append(loss)
+        print(f"k = {k} - Loss = {loss}")
+
+    poly_loss = pd.DataFrame({"k": range(1, 11), "loss": test_errors})
+    fig = px.bar(poly_loss, x="k", y="loss",
+                 title=r"(4) Loss On Fitting On Different Polynomial Degree",
+                 width=600)
+    fig.show()
 
     # Question 5 - Evaluating fitted model on different countries
-    raise NotImplementedError()
+    # Fir over polynom of degree 6 which has the minimal loss
+    poly_fit = PolynomialFitting(6)
+    poly_fit.fit(israel_data[DAY_OF_YEAR].to_numpy(),
+                 israel_data.Temp.to_numpy())
+    countries = dataset.Country.unique().tolist()
+    countries.remove("Israel")
+    country_losses = []
+    for country in countries:
+        country_data = dataset[dataset.Country == country]
+        country_losses.append(
+            poly_fit.loss(country_data[DAY_OF_YEAR].to_numpy(),
+                          country_data.Temp.to_numpy()))
+
+    country_loss_df = pd.DataFrame(
+        {"Country": countries, "loss": country_losses})
+    fig = px.bar(country_loss_df, x="Country", y="loss",
+                 title=r"(5) Loss Of Model On Different Countries",
+                 width=600)
+    fig.show()
