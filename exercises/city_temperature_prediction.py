@@ -118,13 +118,15 @@ if __name__ == '__main__':
     fig.show()
 
     # Question 5 - Evaluating fitted model on different countries
-    # Fir over polynom of degree 6 which has the minimal loss
+    # Fit over polynom of degree 6 which has the minimal loss
     poly_fit = PolynomialFitting(6)
     poly_fit.fit(israel_data[DAY_OF_YEAR].to_numpy(),
                  israel_data.Temp.to_numpy())
+    # Get all countries except Israel
     countries = dataset.Country.unique().tolist()
     countries.remove("Israel")
     country_losses = []
+    # Calculate loss for each country
     for country in countries:
         country_data = dataset[dataset.Country == country]
         country_losses.append(
