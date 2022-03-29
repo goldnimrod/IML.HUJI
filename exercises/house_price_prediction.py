@@ -11,6 +11,7 @@ import plotly.express as px
 import plotly.io as pio
 
 pio.templates.default = "simple_white"
+pio.renderers.default = "browser"
 
 ZIPCODE_SCORE = "zipcode_score"
 ZIPCODE = 'zipcode'
@@ -133,7 +134,8 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series,
         go.Figure([go.Scatter(x=feature_data, y=y,
                               mode='markers')],
                   layout=go.Layout(
-                      title=f"$\\text{{price as a function of {feature} - Corr =}} {pearson_corr}$",
+                      title=f"$\\text{{price as a function of {feature} - }}"
+                            f"\\rho = {pearson_corr}$",
                       xaxis_title=f"$\\text{{{feature}}}$",
                       yaxis_title=r"$\text{price}$",
                       height=500)).write_image(
@@ -151,11 +153,46 @@ if __name__ == '__main__':
     # Question 3 - Split samples into training- and testing sets.
     train_X, train_y, test_X, test_y = split_train_test(X, y)
 
-    # Question 4 - Fit model over increasing percentages of the overall training data
-    # For every percentage p in 10%, 11%, ..., 100%, repeat the following 10 times:
-    #   1) Sample p% of the overall training data
-    #   2) Fit linear model (including intercept) over sampled set
-    #   3) Test fitted model over test set
-    #   4) Store average and variance of loss over test set
-    # Then plot average loss as function of training size with error ribbon of size (mean-2*std, mean+2*std)
-    raise NotImplementedError()
+    # Question 4 - Fit model over increasing percentages of the overall
+    # training data For every percentage p in 10%, 11%, ..., 100%, repeat
+    # the following 10 times:
+    # 1) Sample p% of the overall training data
+    # 2) Fit linear model (including intercept) over sampled set
+    # 3) Test fitted model over test set
+    # 4) Store average and variance of loss over test
+    # set Then plot average loss as function of training size with error
+    # ribbon of size (mean-2*std, mean+2*std)
+    mean_losses = []
+    var_losses = []
+    percents = np.linspace(10, 100, 91)
+    for p in percents:
+        losses = []
+        for _ in range(10):
+            # sample random train of p%
+            p_train_X = train_X.sample(frac=p / 100.0)
+            p_train_y = y.iloc[p_train_X.index]
+            estimator = LinearRegression()
+            estimator.fit(p_train_X.to_numpy(), p_train_y.to_numpy())
+            losses.append(
+                estimator.loss(test_X.to_numpy(), test_y.to_numpy()))
+        mean_losses.append(np.mean(losses))
+        var_losses.append(np.sqrt(np.var(losses)))
+    mean_losses = np.array(mean_losses)
+    var_losses = np.array(var_losses)
+
+    go.Figure([go.Scatter(x=percents, y=mean_losses,
+                          mode='markers',
+                          name='Mean Loss'),
+               go.Scatter(x=percents, y=mean_losses - 2 * var_losses,
+                          fill=None,
+                          mode="lines", line=dict(color="lightgrey"),
+                          showlegend=False),
+               go.Scatter(x=percents, y=mean_losses + 2 * var_losses,
+                          fill='tonexty', mode="lines",
+                          line=dict(color="lightgrey"),
+                          showlegend=False)],
+              layout=go.Layout(
+                  title=r"$\text{(4) Mean Loss as a Function of p%}$",
+                  xaxis_title=r"$\text{p% of train data}$",
+                  yaxis_title=r'$\text{Mean Loss}$',
+                  height=500, width=800)).show()
