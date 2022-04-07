@@ -126,4 +126,4 @@ class Perceptron(BaseEstimator):
             Performance under missclassification loss function
         """
         from ...metrics import misclassification_error
-        return misclassification_error(y, self.predict(X))
+        return misclassification_error(y, self._predict(X))
