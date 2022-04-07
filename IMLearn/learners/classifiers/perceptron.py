@@ -31,10 +31,12 @@ class Perceptron(BaseEstimator):
             A callable to be called after each update of the model while fitting to given data
             Callable function should receive as input a Perceptron instance, current sample and current response
     """
+
     def __init__(self,
                  include_intercept: bool = True,
                  max_iter: int = 1000,
-                 callback: Callable[[Perceptron, np.ndarray, int], None] = default_callback):
+                 callback: Callable[
+                     [Perceptron, np.ndarray, int], None] = default_callback):
         """
         Instantiate a Perceptron classifier
 
@@ -73,7 +75,19 @@ class Perceptron(BaseEstimator):
         -----
         Fits model with or without an intercept depending on value of `self.fit_intercept_`
         """
-        raise NotImplementedError()
+        if self.include_intercept_:
+            X = np.c_[np.ones(X.shape[0]), X]
+
+        self.coefs_ = np.zeros(X.shape[1])
+        for j in range(self.max_iter_):
+            changed_w = False
+            for i in range(y.shape[0]):
+                if not changed_w and y[i] * (self.coefs_ * X[i, :]) <= 0:
+                    self.coefs_ = self.coefs_ + y[i] * X[i, :]
+                    self.callback_(self, X[i, :], y[i])
+                    changed_w = True
+            if not changed_w:
+                return
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
