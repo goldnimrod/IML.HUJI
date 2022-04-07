@@ -82,7 +82,8 @@ class Perceptron(BaseEstimator):
         for j in range(self.max_iter_):
             changed_w = False
             for i in range(y.shape[0]):
-                if not changed_w and y[i] * (self.coefs_ * X[i, :]) <= 0:
+                if not changed_w and (
+                        (y[i] * np.inner(self.coefs_, X[i, :])) <= 0):
                     self.coefs_ = self.coefs_ + y[i] * X[i, :]
                     self.callback_(self, X[i, :], y[i])
                     changed_w = True
