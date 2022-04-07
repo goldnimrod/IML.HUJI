@@ -1,3 +1,5 @@
+import os.path
+
 from IMLearn.utils import split_train_test
 from IMLearn.learners.regressors import LinearRegression
 
@@ -7,7 +9,41 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import plotly.io as pio
+
 pio.templates.default = "simple_white"
+pio.renderers.default = "browser"
+
+ZIPCODE_SCORE = "zipcode_score"
+ZIPCODE = 'zipcode'
+PRICE = "price"
+LAST_RENOV_AGE = "last_renov_age"
+RENOVATED = "renovated"
+HOUSE_AGE = "house_age"
+
+MIN_SQUARE_FOOTAGE = 120
+FILTERED_COLS = ["id", "lat", "long", "date", "yr_built", "yr_renovated",
+                 "zipcode"]
+
+
+def get_valid_df(filename):
+    """
+    Returns a valid DataFrame from the csv while removing
+    rows with invalid features
+    Parameters
+    ----------
+    filename: str
+        Path to house prices dataset
+
+    Returns
+    -------
+    DataFrame that includes only valid rows
+    """
+    df = pd.read_csv(filename)
+    df.date = pd.to_datetime(df.date, errors='coerce')
+    return df[(df.id > 0) & (df.price > 0) & (df.bedrooms > 0) & (
+            df.yr_built > 0) & ((df.yr_renovated == 0) | (
+            df.yr_renovated >= df.yr_built)) &
+              (df.sqft_living >= MIN_SQUARE_FOOTAGE)].dropna()
 
 
 def load_data(filename: str):
@@ -23,10 +59,57 @@ def load_data(filename: str):
     Design matrix and response vector (prices) - either as a single
     DataFrame or a Tuple[DataFrame, Series]
     """
-    raise NotImplementedError()
+    df = get_valid_df(filename)
+    df = add_age_features(df)
+    df = add_zipcode_score(df)
+    df = df.drop(columns=FILTERED_COLS)
+
+    return df.drop(columns=[PRICE]), df.price
 
 
-def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") -> NoReturn:
+def add_zipcode_score(df: pd.DataFrame):
+    """
+        Adds zipcode score (mean price) feature to DataFrame
+        Parameters
+        ----------
+        df: pd.DataFrame
+            DataFrame to work on
+
+        Returns
+        -------
+        df: pd.DataFrame
+            DataFrame with added zipcode score (mean price in zipcode)
+        """
+    zipcode_mean_price = df.groupby(ZIPCODE).mean()[[PRICE]].rename(
+        columns={PRICE: ZIPCODE_SCORE})
+    zipcode_mean_price.reset_index(inplace=True)
+    zipcode_mean_price = zipcode_mean_price[[ZIPCODE, ZIPCODE_SCORE]]
+    df = pd.merge(df, zipcode_mean_price, on=ZIPCODE, how='left')
+    return df
+
+
+def add_age_features(df: pd.DataFrame):
+    """
+    Adds house age and renovation features
+    Parameters
+    ----------
+    df: pd.DataFrame
+        DataFrame to work on
+
+    Returns
+    -------
+    df: pd.DataFrame
+        DataFrame with added features of house age and renovation age
+    """
+    df[HOUSE_AGE] = pd.DatetimeIndex(df.date).year - df.yr_built
+    df[RENOVATED] = np.where(df.yr_renovated > 0, 1, 0)
+    df[LAST_RENOV_AGE] = np.where(df.yr_renovated > 0, pd.DatetimeIndex(
+        df.date).year - df.yr_renovated, df[HOUSE_AGE])
+    return df
+
+
+def feature_evaluation(X: pd.DataFrame, y: pd.Series,
+                       output_path: str = ".") -> NoReturn:
     """
     Create scatter plot between each feature and the response.
         - Plot title specifies feature name
@@ -43,25 +126,72 @@ def feature_evaluation(X: pd.DataFrame, y: pd.Series, output_path: str = ".") ->
     output_path: str (default ".")
         Path to folder in which plots are saved
     """
-    raise NotImplementedError()
+    for feature in X:
+        # feature_data = X[feature]
+        cov = np.cov(X[feature], y)
+        pearson_corr = cov[0][1] / (
+                np.sqrt(cov[0][0]) * np.sqrt(cov[1][1]))
+        fig = px.scatter(X, x=feature, y=y)
+        fig.layout = go.Layout(
+            title=f"$\\text{{price as a function of {feature} - }}"
+                  f"\\rho = {pearson_corr}$",
+            xaxis_title=f"$\\text{{{feature}}}$",
+            yaxis_title=r"$\text{price}$",
+            height=500)
+        fig.write_image(os.path.join(output_path, f"{feature}.png"))
 
 
 if __name__ == '__main__':
     np.random.seed(0)
     # Question 1 - Load and preprocessing of housing prices dataset
-    raise NotImplementedError()
+    X, y = load_data("../datasets/house_prices.csv")
 
     # Question 2 - Feature evaluation with respect to response
-    raise NotImplementedError()
+    feature_evaluation(X, y)
 
     # Question 3 - Split samples into training- and testing sets.
-    raise NotImplementedError()
+    train_X, train_y, test_X, test_y = split_train_test(X, y)
 
-    # Question 4 - Fit model over increasing percentages of the overall training data
-    # For every percentage p in 10%, 11%, ..., 100%, repeat the following 10 times:
-    #   1) Sample p% of the overall training data
-    #   2) Fit linear model (including intercept) over sampled set
-    #   3) Test fitted model over test set
-    #   4) Store average and variance of loss over test set
-    # Then plot average loss as function of training size with error ribbon of size (mean-2*std, mean+2*std)
-    raise NotImplementedError()
+    # Question 4 - Fit model over increasing percentages of the overall
+    # training data For every percentage p in 10%, 11%, ..., 100%, repeat
+    # the following 10 times:
+    # 1) Sample p% of the overall training data
+    # 2) Fit linear model (including intercept) over sampled set
+    # 3) Test fitted model over test set
+    # 4) Store average and variance of loss over test
+    # set Then plot average loss as function of training size with error
+    # ribbon of size (mean-2*std, mean+2*std)
+    mean_losses = []
+    std_losses = []
+    percents = np.linspace(10, 100, 91)
+    for p in percents:
+        losses = []
+        for _ in range(10):
+            # sample random train of p%
+            p_train_X = train_X.sample(frac=p / 100.0)
+            p_train_y = y.iloc[p_train_X.index]
+            estimator = LinearRegression()
+            estimator.fit(p_train_X.to_numpy(), p_train_y.to_numpy())
+            losses.append(
+                estimator.loss(test_X.to_numpy(), test_y.to_numpy()))
+        mean_losses.append(np.mean(losses))
+        std_losses.append(np.std(losses))
+    mean_losses = np.array(mean_losses)
+    std_losses = np.array(std_losses)
+
+    go.Figure([go.Scatter(x=percents, y=mean_losses,
+                          mode='markers',
+                          name='Mean Loss'),
+               go.Scatter(x=percents, y=mean_losses - 2 * std_losses,
+                          fill=None,
+                          mode="lines", line=dict(color="lightgrey"),
+                          showlegend=False),
+               go.Scatter(x=percents, y=mean_losses + 2 * std_losses,
+                          fill='tonexty', mode="lines",
+                          line=dict(color="lightgrey"),
+                          showlegend=False)],
+              layout=go.Layout(
+                  title=r"$\text{(4) Mean Loss as a Function of p%}$",
+                  xaxis_title=r"$\text{p% of train data}$",
+                  yaxis_title=r'$\text{Mean Loss}$',
+                  height=500, width=800)).show()
