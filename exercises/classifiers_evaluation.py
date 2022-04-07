@@ -52,7 +52,8 @@ def run_perceptron():
         fig = px.line(x=list(range(1, len(losses) + 1)), y=losses,
                       labels={"x": "iteration",
                               "y": "loss"},
-                      title=f"{n} - Loss on Train as a Function of Perception iteration")
+                      title=f"{n} - Loss on Train as a Function of Perception iteration",
+                      width=700)
         fig.show()
 
 
