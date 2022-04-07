@@ -49,7 +49,11 @@ def run_perceptron():
         perceptron.fit(X, y)
 
         # Plot figure of loss as function of fitting iteration
-        raise NotImplementedError()
+        fig = px.line(x=list(range(1, len(losses) + 1)), y=losses,
+                      labels={"x": "iteration",
+                              "y": "loss"},
+                      title=f"{n} - Loss on Train as a Function of Perception iteration")
+        fig.show()
 
 
 def get_ellipse(mu: np.ndarray, cov: np.ndarray):
