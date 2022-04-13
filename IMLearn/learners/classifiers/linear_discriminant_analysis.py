@@ -72,12 +72,18 @@ class LDA(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        def calc_predict(k: int):
+
+        def calc_predict(x: np.ndarray, k: int):
             ak = self._cov_inv @ self.mu_[k]
             bk = np.log(self.pi_[k]) - 0.5 * self.mu_[k] @ ak
+            return ak.T @ x + bk
 
-        class_predicts = np.vectorize(lambda k: calc_predict(k))(self.classes_)
-        return self.classes_[np.argmax(class_predicts)]
+        def predict_x(x: np.ndarray):
+            class_predicts = np.vectorize(lambda k: calc_predict(x, k))(
+                self.classes_)
+            return self.classes_[np.argmax(class_predicts)]
+
+        return np.apply_along_axis(predict_x, 1, X)
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
