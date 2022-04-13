@@ -50,6 +50,12 @@ class LDA(BaseEstimator):
         self.classes_ = np.unique(y)
         self.pi_ = np.vectorize(
             lambda k: np.count_nonzero(y == k) / y.shape[0])(self.classes_)
+        self.mu_ = np.vectorize(
+            lambda k: np.sum(np.where(y == k, X, 0)) / np.count_nonzero(
+                y == k))(self.classes_)
+        mu_yi = np.vectorize(lambda yi: self.mu_[yi])(y)
+        self.cov_ = np.sum((X - mu_yi) * (X - mu_yi).T) / (
+                y.shape[0] - self.classes_.shape[0])
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
