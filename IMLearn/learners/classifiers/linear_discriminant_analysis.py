@@ -56,6 +56,7 @@ class LDA(BaseEstimator):
         mu_yi = np.vectorize(lambda yi: self.mu_[yi])(y)
         self.cov_ = np.sum((X - mu_yi) * (X - mu_yi).T) / (
                 y.shape[0] - self.classes_.shape[0])
+        self._cov_inv = inv(self.cov_)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -71,7 +72,12 @@ class LDA(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        def calc_predict(k: int):
+            ak = self._cov_inv @ self.mu_[k]
+            bk = np.log(self.pi_[k]) - 0.5 * self.mu_[k] @ ak
+
+        class_predicts = np.vectorize(lambda k: calc_predict(k))(self.classes_)
+        return self.classes_[np.argmax(class_predicts)]
 
     def likelihood(self, X: np.ndarray) -> np.ndarray:
         """
@@ -112,4 +118,4 @@ class LDA(BaseEstimator):
             Performance under missclassification loss function
         """
         from ...metrics import misclassification_error
-        raise NotImplementedError()
+        return misclassification_error(y, self._predict(X))
