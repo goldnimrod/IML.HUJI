@@ -85,6 +85,7 @@ class Perceptron(BaseEstimator):
                 if not changed_w and (
                         (y[i] * np.inner(self.coefs_, X[i, :])) <= 0):
                     self.coefs_ = self.coefs_ + y[i] * X[i, :]
+                    self.fitted_ = True
                     self.callback_(self, X[i, :], y[i])
                     changed_w = True
             if not changed_w:
@@ -126,4 +127,4 @@ class Perceptron(BaseEstimator):
             Performance under missclassification loss function
         """
         from ...metrics import misclassification_error
-        return misclassification_error(y, self._predict(X))
+        return misclassification_error(y, self.predict(X))
