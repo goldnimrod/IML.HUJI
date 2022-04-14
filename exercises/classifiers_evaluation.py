@@ -45,7 +45,7 @@ def run_perceptron():
         # Fit Perceptron and record loss in each fit iteration
         losses = []
         perceptron = Perceptron(
-            callback=lambda p, sample, result: losses.append(p._loss(X, y)))
+            callback=lambda p, sample, result: losses.append(p.loss(X, y)))
         perceptron.fit(X, y)
 
         # Plot figure of loss as function of fitting iteration
