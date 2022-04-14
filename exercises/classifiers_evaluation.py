@@ -1,5 +1,3 @@
-import numpy as np
-
 from IMLearn.learners.classifiers import Perceptron, LDA, GaussianNaiveBayes
 from typing import Tuple
 from utils import *
@@ -7,6 +5,9 @@ import os.path
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from math import atan2, pi
+
+pio.templates.default = "simple_white"
+pio.renderers.default = "browser"
 
 
 def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -107,33 +108,53 @@ def compare_gaussian_classifiers():
                             subplot_titles=[
                                 rf"$\textbf{{{m} - Accuracy: {accuracy(y, models[m].predict(X))}}}$"
                                 for m in models],
-                            horizontal_spacing=0.01, vertical_spacing=.03)
+                            horizontal_spacing=0.07, vertical_spacing=.03)
 
-        # Add traces for data-points setting symbols and colors
         lims = np.array([X.min(axis=0), X.max(axis=0)]).T + np.array([-.4, .4])
-        symbols = np.array(["circle", "x", "square"])
+        symbols = np.array(["circle", "hourglass", "diamond"])
 
         for i, m in enumerate(models):
+            # Add traces for data-points setting symbols and colors
             fig.add_traces([decision_surface(models[m].predict, lims[0],
                                              lims[1], showscale=False),
-                            go.Scatter(x=X, y=y, mode="markers",
+                            go.Scatter(x=X[:, 0], y=X[:, 1], mode="markers",
                                        showlegend=False,
-                                       marker=dict(color=y, symbol=symbols[y],
-                                                   colorscale=[custom[0],
-                                                               custom[-1]],
+                                       marker=dict(color=y,
+                                                   symbol=symbols[y],
+                                                   colorscale=class_colors(3),
                                                    line=dict(color="black",
                                                              width=1)))],
                            rows=1, cols=i + 1)
 
-            fig.show()
-
             # Add `X` dots specifying fitted Gaussians' means
-            raise NotImplementedError()
-
+            fig.add_traces(
+                [go.Scatter(x=models[m].mu_[:, 0], y=models[m].mu_[:, 1],
+                            mode="markers",
+                            showlegend=False,
+                            marker=dict(color="black",
+                                        symbol="x"))],
+                rows=1, cols=i + 1)
             # Add ellipses depicting the covariances of the fitted Gaussians
-            raise NotImplementedError()
+            if m == "Gaussian Naive Bayes":
+                fig.add_traces(
+                    [get_ellipse(models[m].mu_[k], np.diag(models[m].vars_[k]))
+                     for k in models[m].classes_],
+                    rows=1, cols=i + 1)
+            else:
+                fig.add_traces(
+                    [get_ellipse(models[m].mu_[k], models[m].cov_)
+                     for k in models[m].classes_],
+                    rows=1, cols=i + 1)
 
-    if __name__ == '__main__':
-        np.random.seed(0)
-        run_perceptron()
-        compare_gaussian_classifiers()
+        # Add title
+        fig.update_layout(
+            title=rf"$\textbf{{{f} Dataset}}$",
+            margin=dict(t=100)).update_xaxes(visible=False).update_yaxes(
+            visible=False)
+        fig.show()
+
+
+if __name__ == '__main__':
+    np.random.seed(0)
+    run_perceptron()
+    compare_gaussian_classifiers()
