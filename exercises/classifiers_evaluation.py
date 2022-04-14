@@ -1,3 +1,5 @@
+import numpy as np
+
 from IMLearn.learners.classifiers import Perceptron, LDA, GaussianNaiveBayes
 from typing import Tuple
 from utils import *
@@ -90,28 +92,48 @@ def compare_gaussian_classifiers():
     """
     for f in ["gaussian1.npy", "gaussian2.npy"]:
         # Load dataset
-        raise NotImplementedError()
+        X, y = load_dataset(os.path.join("..", "datasets", f))
 
         # Fit models and predict over training set
-        raise NotImplementedError()
+        gnb = GaussianNaiveBayes().fit(X, y)
+        lda = LDA().fit(X, y)
+        models = {"Gaussian Naive Bayes": gnb, "LDA": lda}
 
         # Plot a figure with two suplots, showing the Gaussian Naive Bayes predictions on the left and LDA predictions
         # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
         # Create subplots
         from IMLearn.metrics import accuracy
-        raise NotImplementedError()
+        fig = make_subplots(rows=1, cols=2,
+                            subplot_titles=[
+                                rf"$\textbf{{{m} - Accuracy: {accuracy(y, models[m].predict(X))}}}$"
+                                for m in models],
+                            horizontal_spacing=0.01, vertical_spacing=.03)
 
         # Add traces for data-points setting symbols and colors
-        raise NotImplementedError()
+        lims = np.array([X.min(axis=0), X.max(axis=0)]).T + np.array([-.4, .4])
+        symbols = np.array(["circle", "x", "square"])
 
-        # Add `X` dots specifying fitted Gaussians' means
-        raise NotImplementedError()
+        for i, m in enumerate(models):
+            fig.add_traces([decision_surface(models[m].predict, lims[0],
+                                             lims[1], showscale=False),
+                            go.Scatter(x=X, y=y, mode="markers",
+                                       showlegend=False,
+                                       marker=dict(color=y, symbol=symbols[y],
+                                                   colorscale=[custom[0],
+                                                               custom[-1]],
+                                                   line=dict(color="black",
+                                                             width=1)))],
+                           rows=1, cols=i + 1)
 
-        # Add ellipses depicting the covariances of the fitted Gaussians
-        raise NotImplementedError()
+            fig.show()
 
+            # Add `X` dots specifying fitted Gaussians' means
+            raise NotImplementedError()
 
-if __name__ == '__main__':
-    np.random.seed(0)
-    run_perceptron()
-    compare_gaussian_classifiers()
+            # Add ellipses depicting the covariances of the fitted Gaussians
+            raise NotImplementedError()
+
+    if __name__ == '__main__':
+        np.random.seed(0)
+        run_perceptron()
+        compare_gaussian_classifiers()
