@@ -50,11 +50,10 @@ class LDA(BaseEstimator):
         self.classes_ = np.unique(y)
         self.pi_ = np.vectorize(
             lambda k: np.count_nonzero(y == k) / y.shape[0])(self.classes_)
-        self.mu_ = np.vectorize(
-            lambda k: np.sum(X[np.where(y == k)]) / np.count_nonzero(
-                y == k))(self.classes_)
-        mu_yi = np.vectorize(lambda yi: self.mu_[yi])(y)
-        self.cov_ = np.sum((X - mu_yi) * (X - mu_yi).T) / (
+        self.mu_ = np.array([np.sum(X[np.where(y == k)], axis=0) / np.count_nonzero(
+                y == k) for k in self.classes_])
+        mu_yi = np.array([self.mu_[yi] for yi in y])
+        self.cov_ = (X - mu_yi).T @ (X - mu_yi) / (
                 y.shape[0] - self.classes_.shape[0])
         self._cov_inv = inv(self.cov_)
 
