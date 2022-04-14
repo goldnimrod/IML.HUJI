@@ -51,7 +51,7 @@ class LDA(BaseEstimator):
         self.pi_ = np.vectorize(
             lambda k: np.count_nonzero(y == k) / y.shape[0])(self.classes_)
         self.mu_ = np.vectorize(
-            lambda k: np.sum(np.where(y == k, X, 0)) / np.count_nonzero(
+            lambda k: np.sum(X[np.where(y == k)]) / np.count_nonzero(
                 y == k))(self.classes_)
         mu_yi = np.vectorize(lambda yi: self.mu_[yi])(y)
         self.cov_ = np.sum((X - mu_yi) * (X - mu_yi).T) / (
@@ -104,7 +104,12 @@ class LDA(BaseEstimator):
             raise ValueError(
                 "Estimator must first be fitted before calling `likelihood` function")
 
-        raise NotImplementedError()
+        def calc_predict(x: np.ndarray, k: int):
+            ak = self._cov_inv @ self.mu_[k]
+            bk = np.log(self.pi_[k]) - 0.5 * self.mu_[k] @ ak
+            return ak.T @ x + bk
+
+        return np.vectorize(calc_predict)(X, self.classes_)
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
