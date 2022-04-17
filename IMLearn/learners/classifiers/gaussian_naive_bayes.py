@@ -1,6 +1,7 @@
 from typing import NoReturn
 from ...base import BaseEstimator
 import numpy as np
+from numpy.linalg import det, inv
 
 
 class GaussianNaiveBayes(BaseEstimator):
@@ -71,9 +72,10 @@ class GaussianNaiveBayes(BaseEstimator):
         """
 
         def calc_predict(x: np.ndarray, k: int):
-            ak = np.diag(self.vars_[k]) @ self.mu_[k]
+            ak = inv(np.diag(self.vars_[k])) @ self.mu_[k]
             bk = np.log(self.pi_[k]) - 0.5 * self.mu_[k] @ ak
-            return ak.T @ x + bk
+            ck = -0.5 * inv(np.diag(self.vars_[k])) @ x
+            return ak.T @ x + bk + ck.T @ x
 
         def predict_x(x: np.ndarray):
             class_predicts = np.vectorize(lambda k: calc_predict(x, k))(
@@ -105,7 +107,7 @@ class GaussianNaiveBayes(BaseEstimator):
             cov_k = np.diag(self.vars_[k])
             return np.exp(-0.5 * (x - self.mu_[k]).T @ np.inv(cov_k) @ (
                 (x - self.mu_[k]))) / np.sqrt(
-                np.det(cov_k) * (2 * np.pi) ** x.shape[0])
+                det(cov_k) * (2 * np.pi) ** x.shape[0])
 
         return np.array([[calc_pdf(x, k) for k in self.classes_] for x in X])
 
