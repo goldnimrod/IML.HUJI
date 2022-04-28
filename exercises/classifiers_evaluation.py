@@ -1,9 +1,13 @@
 from IMLearn.learners.classifiers import Perceptron, LDA, GaussianNaiveBayes
 from typing import Tuple
 from utils import *
+import os.path
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from math import atan2, pi
+
+pio.templates.default = "simple_white"
+pio.renderers.default = "browser"
 
 
 def load_dataset(filename: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -36,16 +40,24 @@ def run_perceptron():
     Create a line plot that shows the perceptron algorithm's training loss values (y-axis)
     as a function of the training iterations (x-axis).
     """
-    for n, f in [("Linearly Separable", "linearly_separable.npy"), ("Linearly Inseparable", "linearly_inseparable.npy")]:
+    for n, f in [("Linearly Separable", "linearly_separable.npy"),
+                 ("Linearly Inseparable", "linearly_inseparable.npy")]:
         # Load dataset
-        raise NotImplementedError()
+        X, y = load_dataset(os.path.join("..", "datasets", f))
 
         # Fit Perceptron and record loss in each fit iteration
         losses = []
-        raise NotImplementedError()
+        perceptron = Perceptron(
+            callback=lambda p, sample, result: losses.append(p.loss(X, y)))
+        perceptron.fit(X, y)
 
         # Plot figure of loss as function of fitting iteration
-        raise NotImplementedError()
+        fig = px.line(x=list(range(1, len(losses) + 1)), y=losses,
+                      labels={"x": "iteration",
+                              "y": "loss"},
+                      title=f"{n} - Loss on Train as a Function of Perception iteration",
+                      width=700)
+        fig.show()
 
 
 def get_ellipse(mu: np.ndarray, cov: np.ndarray):
@@ -65,12 +77,14 @@ def get_ellipse(mu: np.ndarray, cov: np.ndarray):
         scatter: A plotly trace object of the ellipse
     """
     l1, l2 = tuple(np.linalg.eigvalsh(cov)[::-1])
-    theta = atan2(l1 - cov[0, 0], cov[0, 1]) if cov[0, 1] != 0 else (np.pi / 2 if cov[0, 0] < cov[1, 1] else 0)
+    theta = atan2(l1 - cov[0, 0], cov[0, 1]) if cov[0, 1] != 0 else (
+        np.pi / 2 if cov[0, 0] < cov[1, 1] else 0)
     t = np.linspace(0, 2 * pi, 100)
     xs = (l1 * np.cos(theta) * np.cos(t)) - (l2 * np.sin(theta) * np.sin(t))
     ys = (l1 * np.sin(theta) * np.cos(t)) + (l2 * np.cos(theta) * np.sin(t))
 
-    return go.Scatter(x=mu[0] + xs, y=mu[1] + ys, mode="lines", marker_color="black")
+    return go.Scatter(x=mu[0] + xs, y=mu[1] + ys, mode="lines",
+                      marker_color="black")
 
 
 def compare_gaussian_classifiers():
@@ -79,25 +93,65 @@ def compare_gaussian_classifiers():
     """
     for f in ["gaussian1.npy", "gaussian2.npy"]:
         # Load dataset
-        raise NotImplementedError()
+        X, y = load_dataset(os.path.join("..", "datasets", f))
 
         # Fit models and predict over training set
-        raise NotImplementedError()
+        gnb = GaussianNaiveBayes().fit(X, y)
+        lda = LDA().fit(X, y)
+        models = {"Gaussian Naive Bayes": gnb, "LDA": lda}
 
         # Plot a figure with two suplots, showing the Gaussian Naive Bayes predictions on the left and LDA predictions
         # on the right. Plot title should specify dataset used and subplot titles should specify algorithm and accuracy
         # Create subplots
         from IMLearn.metrics import accuracy
-        raise NotImplementedError()
+        fig = make_subplots(rows=1, cols=2,
+                            subplot_titles=[
+                                rf"$\textbf{{{m} - Accuracy: {accuracy(y, models[m].predict(X))}}}$"
+                                for m in models],
+                            horizontal_spacing=0.07, vertical_spacing=.03)
 
-        # Add traces for data-points setting symbols and colors
-        raise NotImplementedError()
+        lims = np.array([X.min(axis=0), X.max(axis=0)]).T + np.array([-.4, .4])
+        symbols = np.array(["circle", "hourglass", "diamond"])
 
-        # Add `X` dots specifying fitted Gaussians' means
-        raise NotImplementedError()
+        for i, m in enumerate(models):
+            # Add traces for data-points setting symbols and colors
+            fig.add_traces([decision_surface(models[m].predict, lims[0],
+                                             lims[1], showscale=False),
+                            go.Scatter(x=X[:, 0], y=X[:, 1], mode="markers",
+                                       showlegend=False,
+                                       marker=dict(color=y,
+                                                   symbol=symbols[y],
+                                                   colorscale=class_colors(3),
+                                                   line=dict(color="black",
+                                                             width=1)))],
+                           rows=1, cols=i + 1)
 
-        # Add ellipses depicting the covariances of the fitted Gaussians
-        raise NotImplementedError()
+            # Add `X` dots specifying fitted Gaussians' means
+            fig.add_traces(
+                [go.Scatter(x=models[m].mu_[:, 0], y=models[m].mu_[:, 1],
+                            mode="markers",
+                            showlegend=False,
+                            marker=dict(color="black",
+                                        symbol="x"))],
+                rows=1, cols=i + 1)
+            # Add ellipses depicting the covariances of the fitted Gaussians
+            if m == "Gaussian Naive Bayes":
+                fig.add_traces(
+                    [get_ellipse(models[m].mu_[k], np.diag(models[m].vars_[k]))
+                     for k in models[m].classes_],
+                    rows=1, cols=i + 1)
+            else:
+                fig.add_traces(
+                    [get_ellipse(models[m].mu_[k], models[m].cov_)
+                     for k in models[m].classes_],
+                    rows=1, cols=i + 1)
+
+        # Add title
+        fig.update_layout(
+            title=rf"$\textbf{{{f} Dataset}}$",
+            margin=dict(t=100)).update_xaxes(visible=False).update_yaxes(
+            visible=False)
+        fig.show()
 
 
 if __name__ == '__main__':
