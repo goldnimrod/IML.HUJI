@@ -50,12 +50,12 @@ class AdaBoost(BaseEstimator):
             Responses of input data to fit to
         """
         self.D_ = np.array([1.0 / X.shape[0]] * X.shape[0])
+        self.weights_ = np.zeros(self.iterations_)
+        self.models_ = []
         for i in range(self.iterations_):
-            current_X, current_Y = self._bootstrap(X, y)
-            self.models_.append(self.wl_().fit(current_X, current_Y))
-            self.weights_[i] = 0.5 * np.log(
-                1.0 / misclassification_error(y,
-                                              self.models_[i].predict(X)) - 1)
+            self.models_.append(self.wl_().fit(X, y * self.D_))
+            self.weights_[i] = 0.5 * np.log((1.0 / np.sum(
+                self.D_[np.not_equal(y, self.models_[i].predict(X))])) - 1)
             self.D_ = np.vectorize(
                 lambda j: self.D_[j] * np.exp(
                     -self.weights_[i] * y[j] *

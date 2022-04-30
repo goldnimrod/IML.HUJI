@@ -21,6 +21,7 @@ class DecisionStump(BaseEstimator):
     self.sign_: int
         The label to predict for samples where the value of the j'th feature is about the threshold
     """
+
     def __init__(self) -> DecisionStump:
         """
         Instantiate a Decision stump classifier
@@ -43,10 +44,12 @@ class DecisionStump(BaseEstimator):
         min_error = 1
         # TODO: maybe change according to answer in forum
         # ran on all sign combinations instead of determining the majority
-        for feature_index, sign in product(range(X.shape[1]), np.unique(y)):
+        for feature_index, sign in product(range(X.shape[1]),
+                                           np.unique(np.sign(y))):
             threshold, error = self._find_threshold(X[:, feature_index], y,
                                                     sign)
             if error <= min_error:
+                min_error = error
                 self.threshold_ = threshold
                 self.sign_ = sign
                 self.j_ = feature_index
@@ -70,7 +73,8 @@ class DecisionStump(BaseEstimator):
         Feature values strictly below threshold are predicted as `-sign` whereas values which equal
         to or above the threshold are predicted as `sign`
         """
-        return np.where(X[:, self.j_] < self.threshold_, -self.sign_, self.sign_)
+        return np.where(X[:, self.j_] < self.threshold_, -self.sign_,
+                        self.sign_)
 
     def _find_threshold(self, values: np.ndarray, labels: np.ndarray,
                         sign: int) -> Tuple[float, float]:
@@ -124,11 +128,13 @@ class DecisionStump(BaseEstimator):
             """
             # TODO: maybe add according to answer in forum
             # sign = np.argmax(np.histogram(sorted_labels[i:]))
-            threshold_values = np.where(np.arange(sorted_values.shape[0]) < i,
-                                        -sign,
-                                        sign)
-            return misclassification_error(sorted_labels,
-                                           threshold_values)
+            threshold_labels = np.where(np.arange(sorted_values.shape[0]) < i,
+                                        -sign, sign)
+            return np.sum(np.abs(sorted_labels[
+                                     np.not_equal(np.sign(sorted_labels),
+                                                  np.sign(threshold_labels))]))
+            # return misclassification_error(np.sign(sorted_labels),
+            #                                np.sign(threshold_labels))
 
         errors = np.vectorize(calc_thr_value_error)(
             np.arange(sorted_values.shape[0]))
@@ -152,4 +158,4 @@ class DecisionStump(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        return misclassification_error(y, self.predict(X))
+        return misclassification_error(np.sign(y), np.sign(self.predict(X)))
