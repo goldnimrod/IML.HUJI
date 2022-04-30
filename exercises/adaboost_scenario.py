@@ -38,11 +38,15 @@ def generate_data(n: int, noise_ratio: float) -> Tuple[np.ndarray, np.ndarray]:
     return X, y
 
 
-def fit_and_evaluate_adaboost(noise, n_learners=350, train_size=5000,
-                              test_size=500):
+def fit_and_evaluate_adaboost(noise, n_learners=6, train_size=5,
+                              test_size=5):
     (train_X, train_y), (test_X, test_y) = generate_data(train_size,
                                                          noise), generate_data(
         test_size, noise)
+
+    go.Figure([go.Scatter(x=train_X[:, 0], y=train_X[:, 1], mode="markers",
+               showlegend=False,
+               marker=dict(color=train_y))]).show()
 
     # Question 1: Train- and test errors of AdaBoost in noiseless case
     adaboost = AdaBoost(DecisionStump, n_learners).fit(train_X, train_y)
