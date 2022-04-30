@@ -44,12 +44,13 @@ class DecisionStump(BaseEstimator):
         min_error = 1
         # TODO: maybe change according to answer in forum
         # ran on all sign combinations instead of determining the majority
-        for feature_index, sign in product(X.shape[1], np.unique(y)):
+        for feature_index, sign in product(range(X.shape[1]), np.unique(y)):
             threshold, error = self._find_threshold(X[:, feature_index], y,
                                                     sign)
             if error <= min_error:
                 self.threshold_ = threshold
                 self.sign_ = sign
+                self.j_ = feature_index
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -70,7 +71,7 @@ class DecisionStump(BaseEstimator):
         Feature values strictly below threshold are predicted as `-sign` whereas values which equal
         to or above the threshold are predicted as `sign`
         """
-        return np.where(X[self.j_] < self.threshold_, -self.sign_, self.sign_)
+        return np.where(X[:, self.j_] < self.threshold_, -self.sign_, self.sign_)
 
     def _find_threshold(self, values: np.ndarray, labels: np.ndarray,
                         sign: int) -> Tuple[float, float]:
@@ -124,12 +125,14 @@ class DecisionStump(BaseEstimator):
             """
             # TODO: maybe add according to answer in forum
             # sign = np.argmax(np.histogram(sorted_labels[i:]))
-            threshold_values = np.where(np.indices(sorted_values) < i, -sign,
+            threshold_values = np.where(np.arange(sorted_values.shape[0]) < i,
+                                        -sign,
                                         sign)
             return misclassification_error(sorted_labels,
                                            threshold_values)
 
-        errors = np.vectorize(calc_thr_value_error)(sorted_values.shape[0])
+        errors = np.vectorize(calc_thr_value_error)(
+            np.arange(sorted_values.shape[0]))
         min_error_index = np.argmin(errors)
         return sorted_values[min_error_index], errors[min_error_index]
 

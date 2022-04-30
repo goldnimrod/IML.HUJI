@@ -50,7 +50,7 @@ class AdaBoost(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        self.D_ = np.array([X.shape[0]] * (1.0 / X.shape[0]))
+        self.D_ = np.array([1.0 / X.shape[0]] * X.shape[0])
         for i in range(self.iterations_):
             current_X, current_Y = self._bootstrap(X, y)
             self.models_.append(self.wl_().fit(current_X, current_Y))
@@ -59,9 +59,10 @@ class AdaBoost(BaseEstimator):
                                               self.models_[i].predict(X)) - 1)
             self.D_ = np.vectorize(
                 lambda j: self.D_[j] * np.exp(
-                    -self.weights_[i] * y[j] * self.models_[i].predict(X[j])[
-                        0]))(X.shape[0])
-            self.D_ = self.D_ / np.linalg.norm(self.D_)
+                    -self.weights_[i] * y[j] *
+                    self.models_[i].predict(np.array([X[j]]))[0]))(
+                np.arange(X.shape[0]))
+            self.D_ = self.D_ / np.sum(self.D_)
 
     def _bootstrap(self, X, y):
         """
@@ -83,7 +84,8 @@ class AdaBoost(BaseEstimator):
         sampled_y : ndarray of shape (n_samples, )
             Responses of sampled data
         """
-        samples = np.random.choice(np.indices(y), y.shape[0], p=self.D_)
+        samples = np.random.choice(np.arange(y.shape[0]), y.shape[0],
+                                   p=self.D_)
         return X[samples, :], y[samples]
 
     def _predict(self, X):
@@ -139,9 +141,8 @@ class AdaBoost(BaseEstimator):
             Predicted responses of given samples
         """
         return np.sign(
-            np.sum(np.vectorize(
-                lambda i: self.models_[i].predict(X) * self.weights_[i])(
-                self.iterations_)))
+            np.sum([self.models_[i].predict(X) * self.weights_[i] for i in
+                    np.arange(T)]))
 
     def partial_loss(self, X: np.ndarray, y: np.ndarray, T: int) -> float:
         """
