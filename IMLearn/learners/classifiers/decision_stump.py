@@ -44,8 +44,9 @@ class DecisionStump(BaseEstimator):
         min_error = 1
         # TODO: maybe change according to answer in forum
         # ran on all sign combinations instead of determining the majority
-        for values, sign in product(X.T, np.unique(y)):
-            threshold, error = self._find_threshold(values, y, sign)
+        for feature_index, sign in product(X.shape[1], np.unique(y)):
+            threshold, error = self._find_threshold(X[:, feature_index], y,
+                                                    sign)
             if error <= min_error:
                 self.threshold_ = threshold
                 self.sign_ = sign
