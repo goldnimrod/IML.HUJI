@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import NoReturn, Tuple
+from typing import Tuple, NoReturn
 from ...base import BaseEstimator
 import numpy as np
 from ...metrics import misclassification_error
@@ -21,7 +21,6 @@ class DecisionStump(BaseEstimator):
     self.sign_: int
         The label to predict for samples where the value of the j'th feature is about the threshold
     """
-
     def __init__(self) -> DecisionStump:
         """
         Instantiate a Decision stump classifier
