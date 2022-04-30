@@ -105,16 +105,31 @@ class DecisionStump(BaseEstimator):
         """
         sorted_values = values[values.argsort()]
         sorted_labels = labels[values.argsort()]
-        errors = []
 
-        for i, value in enumerate(sorted_values):
+        def calc_thr_value_error(i):
+            """
+            Calculates the misclassificaiton error of the threshold with
+            The value in index i
+
+            Parameters
+            ----------
+            i: int
+                The index of the value in the sorted_values array
+
+            Returns
+            -------
+            thr_err: float between 0 and 1
+                Misclassificaiton error of the threshold
+
+            """
             # TODO: maybe add according to answer in forum
             # sign = np.argmax(np.histogram(sorted_labels[i:]))
             threshold_values = np.where(np.indices(sorted_values) < i, -sign,
                                         sign)
-            errors.append(misclassification_error(sorted_labels,
-                                                  threshold_values))
+            return misclassification_error(sorted_labels,
+                                           threshold_values)
 
+        errors = np.vectorize(calc_thr_value_error)(sorted_values.shape[0])
         min_error_index = np.argmin(errors)
         return sorted_values[min_error_index], errors[min_error_index]
 
