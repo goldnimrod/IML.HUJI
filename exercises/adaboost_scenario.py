@@ -45,15 +45,15 @@ def fit_and_evaluate_adaboost(noise, n_learners=6, train_size=5,
         test_size, noise)
 
     go.Figure([go.Scatter(x=train_X[:, 0], y=train_X[:, 1], mode="markers",
-               showlegend=False,
-               marker=dict(color=train_y))]).show()
+                          showlegend=False,
+                          marker=dict(color=train_y))]).show()
 
     # Question 1: Train- and test errors of AdaBoost in noiseless case
     adaboost = AdaBoost(DecisionStump, n_learners).fit(train_X, train_y)
     fig = px.line(y=[[adaboost.partial_loss(train_X, train_y, i) for i in
-                      range(n_learners)], [
+                      range(1, n_learners + 1)], [
                          adaboost.partial_loss(test_X, test_y, i) for i in
-                         range(n_learners)]])
+                         range(1, n_learners + 1)]])
     fig.show()
 
     # Question 2: Plotting decision surfaces
