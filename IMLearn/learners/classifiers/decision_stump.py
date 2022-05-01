@@ -109,6 +109,11 @@ class DecisionStump(BaseEstimator):
         """
         sorted_values = values[values.argsort()]
         sorted_labels = labels[values.argsort()]
+        error_count = np.sum(np.abs(sorted_labels[
+                                        np.not_equal(np.sign(sorted_labels),
+                                                     np.ones(
+                                                         sorted_values.shape[
+                                                             0]) * sign)]))
 
         def calc_thr_value_error(i):
             """
@@ -128,13 +133,19 @@ class DecisionStump(BaseEstimator):
             """
             # TODO: maybe add according to answer in forum
             # sign = np.argmax(np.histogram(sorted_labels[i:]))
-            threshold_labels = np.where(np.arange(sorted_values.shape[0]) < i,
-                                        -sign, sign)
-            return np.sum(np.abs(sorted_labels[
-                                     np.not_equal(np.sign(sorted_labels),
-                                                  np.sign(threshold_labels))]))
-            # return misclassification_error(np.sign(sorted_labels),
-            #                                np.sign(threshold_labels))
+            # threshold_labels = np.where(np.arange(sorted_values.shape[0]) < i,
+            #                             -sign, sign)
+            # return np.sum(np.abs(sorted_labels[
+            #                          np.not_equal(np.sign(sorted_labels),
+            #                                       np.sign(threshold_labels))]))
+            nonlocal error_count
+            if i == 0:
+                return error_count
+            if np.sign(sorted_labels[i - 1]) == -sign:
+                error_count -= np.abs(sorted_labels[i - 1])
+            else:
+                error_count += np.abs(sorted_labels[i - 1])
+            return error_count
 
         errors = np.vectorize(calc_thr_value_error)(
             np.arange(sorted_values.shape[0]))
