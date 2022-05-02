@@ -65,15 +65,6 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000,
                       yaxis_title="Error",
                       title=f"Error as Function of fitted learners count with noise {noise}")
     fig.show()
-    # fig = px.line(x=list(range(1, n_learners + 1)),
-    #               y=[[adaboost.partial_loss(train_X, train_y, i) for i in
-    #                   range(1, n_learners + 1)], [
-    #                      adaboost.partial_loss(test_X, test_y, i) for i in
-    #                      range(1, n_learners + 1)]],
-    #               labels={"x": "Learners Count",
-    #                       "value": "Error",
-    #                       "variable": "Data"},
-    #               title=f"Error as Function of fitted learners count with noise {noise}")
 
     # Question 2: Plotting decision surfaces
     T = [5, 50, 100, 250]
@@ -122,12 +113,24 @@ def fit_and_evaluate_adaboost(noise, n_learners=250, train_size=5000,
                                                          custom[-1]],
                                line=dict(color="black", width=1)))])
     fig.update_layout(
-        title=rf"$\textbf{{Best performing Ensemble - {best_ensemble_size} - "
+        title=rf"$\textbf{{Best performing Ensemble on noise {noise} - {best_ensemble_size} iterations - "
               rf"Accuracy: {accuracy(test_y, adaboost.partial_predict(test_X, best_ensemble_size))}}}$")
     fig.show()
 
     # Question 4: Decision surface with weighted samples
-    raise NotImplementedError()
+    fig = go.Figure()
+    fig.add_traces([decision_surface(
+        adaboost.predict, lims[0], lims[1], showscale=False),
+        go.Scatter(x=train_X[:, 0], y=train_X[:, 1],
+                   mode="markers",
+                   showlegend=False,
+                   marker=dict(color=test_y, colorscale=[custom[0],
+                                                         custom[-1]],
+                               line=dict(color="black", width=1),
+                               size=(adaboost.D_ / np.max(adaboost.D_)) * 5))])
+    fig.update_layout(
+        title=rf"$\textbf{{Train Set probability on last adaboost iteration on noise {noise}}}$")
+    fig.show()
 
 
 if __name__ == '__main__':

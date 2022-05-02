@@ -42,8 +42,7 @@ class DecisionStump(BaseEstimator):
             Responses of input data to fit to
         """
         min_error = 1
-        # TODO: maybe change according to answer in forum
-        # ran on all sign combinations instead of determining the majority
+        # Run on all sign combinations instead of determining the majority
         for feature_index, sign in product(range(X.shape[1]),
                                            np.unique(np.sign(y))):
             threshold, error = self._find_threshold(X[:, feature_index], y,
@@ -131,13 +130,6 @@ class DecisionStump(BaseEstimator):
                 Misclassificaiton error of the threshold
 
             """
-            # TODO: maybe add according to answer in forum
-            # sign = np.argmax(np.histogram(sorted_labels[i:]))
-            # threshold_labels = np.where(np.arange(sorted_values.shape[0]) < i,
-            #                             -sign, sign)
-            # return np.sum(np.abs(sorted_labels[
-            #                          np.not_equal(np.sign(sorted_labels),
-            #                                       np.sign(threshold_labels))]))
             nonlocal error_count
             if i == 0:
                 return error_count
