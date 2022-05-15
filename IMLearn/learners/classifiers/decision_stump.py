@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import Tuple, NoReturn
 from ...base import BaseEstimator
 import numpy as np
+from ...metrics import misclassification_error
 from itertools import product
 
 
@@ -20,6 +21,7 @@ class DecisionStump(BaseEstimator):
     self.sign_: int
         The label to predict for samples where the value of the j'th feature is about the threshold
     """
+
     def __init__(self) -> DecisionStump:
         """
         Instantiate a Decision stump classifier
@@ -39,7 +41,17 @@ class DecisionStump(BaseEstimator):
         y : ndarray of shape (n_samples, )
             Responses of input data to fit to
         """
-        raise NotImplementedError()
+        min_error = 1
+        # Run on all sign combinations instead of determining the majority
+        for feature_index, sign in product(range(X.shape[1]),
+                                           np.unique(np.sign(y))):
+            threshold, error = self._find_threshold(X[:, feature_index], y,
+                                                    sign)
+            if error <= min_error:
+                min_error = error
+                self.threshold_ = threshold
+                self.sign_ = sign
+                self.j_ = feature_index
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -49,9 +61,6 @@ class DecisionStump(BaseEstimator):
         ----------
         X : ndarray of shape (n_samples, n_features)
             Input data to predict responses for
-
-        y : ndarray of shape (n_samples, )
-            Responses of input data to fit to
 
         Returns
         -------
@@ -63,9 +72,11 @@ class DecisionStump(BaseEstimator):
         Feature values strictly below threshold are predicted as `-sign` whereas values which equal
         to or above the threshold are predicted as `sign`
         """
-        raise NotImplementedError()
+        return np.where(X[:, self.j_] < self.threshold_, -self.sign_,
+                        self.sign_)
 
-    def _find_threshold(self, values: np.ndarray, labels: np.ndarray, sign: int) -> Tuple[float, float]:
+    def _find_threshold(self, values: np.ndarray, labels: np.ndarray,
+                        sign: int) -> Tuple[float, float]:
         """
         Given a feature vector and labels, find a threshold by which to perform a split
         The threshold is found according to the value minimizing the misclassification
@@ -95,7 +106,43 @@ class DecisionStump(BaseEstimator):
         For every tested threshold, values strictly below threshold are predicted as `-sign` whereas values
         which equal to or above the threshold are predicted as `sign`
         """
-        raise NotImplementedError()
+        sorted_values = values[values.argsort()]
+        sorted_labels = labels[values.argsort()]
+        error_count = np.sum(np.abs(sorted_labels[
+                                        np.not_equal(np.sign(sorted_labels),
+                                                     np.ones(
+                                                         sorted_values.shape[
+                                                             0]) * sign)]))
+
+        def calc_thr_value_error(i):
+            """
+            Calculates the misclassificaiton error of the threshold with
+            The value in index i
+
+            Parameters
+            ----------
+            i: int
+                The index of the value in the sorted_values array
+
+            Returns
+            -------
+            thr_err: float between 0 and 1
+                Misclassificaiton error of the threshold
+
+            """
+            nonlocal error_count
+            if i == 0:
+                return error_count
+            if np.sign(sorted_labels[i - 1]) == -sign:
+                error_count -= np.abs(sorted_labels[i - 1])
+            else:
+                error_count += np.abs(sorted_labels[i - 1])
+            return error_count
+
+        errors = np.vectorize(calc_thr_value_error)(
+            np.arange(sorted_values.shape[0]))
+        min_error_index = np.argmin(errors)
+        return sorted_values[min_error_index], errors[min_error_index]
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -114,4 +161,4 @@ class DecisionStump(BaseEstimator):
         loss : float
             Performance under missclassification loss function
         """
-        raise NotImplementedError()
+        return misclassification_error(np.sign(y), np.sign(self.predict(X)))
