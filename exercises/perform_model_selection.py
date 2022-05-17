@@ -52,7 +52,9 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
                     marker=dict(color="red", opacity=.7)),
          go.Scatter(x=test_X, y=test_y, mode="markers", name="Test",
                     marker=dict(color="blue", opacity=.7))])
-    fig.update_layout(title=r"$\text{(1) Splitted Sample Points}$").show()
+    fig.update_layout(
+        title=f"$\\text{{Splitted Sample Points, noise}} = {noise} \\text{{, m}} = {n_samples}$",
+        width=800).show()
 
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
     train_errors = []
@@ -72,12 +74,16 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
                     name="Validation Error",
                     marker=dict(color="blue", opacity=.7))])
     fig.update_layout(
-        title=r"$\text{(1) Cross Validate Errors as Function of Polynom Degree}$",
+        title=f"$\\text{{Cross Validate Errors as Function of Polynom Degree, noise}} = {noise} \\text{{, m}} = {n_samples}$",
         xaxis=dict(title="Polynom degree"),
-        yaxis=dict(title="Error", type="log")).show()
+        yaxis=dict(title="Error", type="log"),
+        width=800).show()
 
     # Question 3 - Using best value of k, fit a k-degree polynomial model and report test error
-    raise NotImplementedError()
+    opt_k = np.array(validation_errors).argmin()
+    model = PolynomialFitting(opt_k).fit(test_X, test_y)
+    print(f"Optimal k: {opt_k}")
+    print(f"Test Error: {np.around(model.loss(test_X, test_y), 2)}")
 
 
 def select_regularization_parameter(n_samples: int = 50,
@@ -107,4 +113,6 @@ def select_regularization_parameter(n_samples: int = 50,
 if __name__ == '__main__':
     np.random.seed(0)
     select_polynomial_degree()
+    select_polynomial_degree(noise=0)
+    select_polynomial_degree(n_samples=1500, noise=10)
     raise NotImplementedError()
