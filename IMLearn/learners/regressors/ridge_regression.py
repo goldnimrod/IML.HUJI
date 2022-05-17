@@ -1,6 +1,7 @@
 from __future__ import annotations
 from typing import NoReturn
 from ...base import BaseEstimator
+from linear_regression import LinearRegression
 import numpy as np
 
 
@@ -11,7 +12,8 @@ class RidgeRegression(BaseEstimator):
     Solving Ridge Regression optimization problem
     """
 
-    def __init__(self, lam: float, include_intercept: bool = True) -> RidgeRegression:
+    def __init__(self, lam: float,
+                 include_intercept: bool = True) -> RidgeRegression:
         """
         Initialize a ridge regression model
 
@@ -33,7 +35,6 @@ class RidgeRegression(BaseEstimator):
             `LinearRegression.fit` function.
         """
 
-
         """
         Initialize a ridge regression model
         :param lam: scalar value of regularization parameter
@@ -42,6 +43,7 @@ class RidgeRegression(BaseEstimator):
         self.coefs_ = None
         self.include_intercept_ = include_intercept
         self.lam_ = lam
+        self.lin_reg = LinearRegression(include_intercept=include_intercept)
 
     def _fit(self, X: np.ndarray, y: np.ndarray) -> NoReturn:
         """
@@ -59,7 +61,11 @@ class RidgeRegression(BaseEstimator):
         -----
         Fits model with or without an intercept depending on value of `self.include_intercept_`
         """
-        raise NotImplementedError()
+        X_lambda = np.concatenate((X, self.lam_ * np.identity(X.shape[1])),
+                                  axis=0)
+        y_lambda = np.concatenate((X, np.zeros((y.shape[0], y.shape[0]))),
+                                  axis=0)
+        self.lin_reg.fit(X_lambda, y_lambda)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -75,7 +81,7 @@ class RidgeRegression(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        return self.lin_reg.predict(X)
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -94,4 +100,4 @@ class RidgeRegression(BaseEstimator):
         loss : float
             Performance under MSE loss function
         """
-        raise NotImplementedError()
+        return self.lin_reg.loss(X, y)
