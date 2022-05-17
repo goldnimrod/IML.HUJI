@@ -55,7 +55,26 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     fig.update_layout(title=r"$\text{(1) Splitted Sample Points}$").show()
 
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
-    raise NotImplementedError()
+    train_errors = []
+    validation_errors = []
+    for k in range(11):
+        train_error, val_error = cross_validate(PolynomialFitting(k), train_X,
+                                                train_y,
+                                                mean_square_error)
+        train_errors.append(train_error)
+        validation_errors.append(val_error)
+    fig = go.Figure()
+    fig.add_traces(
+        [go.Scatter(x=np.arange(11), y=train_errors, mode="markers+lines",
+                    name="Train Error",
+                    marker=dict(color="red", opacity=.7)),
+         go.Scatter(x=np.arange(11), y=validation_errors, mode="markers+lines",
+                    name="Validation Error",
+                    marker=dict(color="blue", opacity=.7))])
+    fig.update_layout(
+        title=r"$\text{(1) Cross Validate Errors as Function of Polynom Degree}$",
+        xaxis=dict(title="Polynom degree"),
+        yaxis=dict(title="Error", type="log")).show()
 
     # Question 3 - Using best value of k, fit a k-degree polynomial model and report test error
     raise NotImplementedError()
