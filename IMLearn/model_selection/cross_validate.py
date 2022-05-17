@@ -39,15 +39,14 @@ def cross_validate(estimator: BaseEstimator, X: np.ndarray, y: np.ndarray,
         Average validation score over folds
     """
     folds = np.split(np.arange(y.shape[0]), cv)
+    train_scores = []
+    validation_scores = []
 
-    train_scores = np.vectorize(
-        lambda k: scoring(y[~folds[k]],
-                          estimator.fit(X[~folds[k]], y[~folds[k]]).predict(
-                              X[~folds[k]]), ...))(np.arange(cv))
+    for k in range(cv):
+        k_estimator = estimator.fit(X[~folds[k]], y[~folds[k]])
+        train_scores.append(
+            scoring(y[~folds[k]], k_estimator.predict(X[~folds[k]]), ...))
+        validation_scores.append(
+            scoring(y[folds[k]], k_estimator.predict(X[folds[k]]), ...))
 
-    validation_scores = np.vectorize(
-        lambda k: scoring(y[folds[k]],
-                          estimator.fit(X[~folds[k]], y[~folds[k]]).predict(
-                              X[folds[k]]), ...))(np.arange(cv))
-
-    return train_scores.mean(), validation_scores.mean()
+    return np.array(train_scores).mean(), np.array(validation_scores).mean()
