@@ -5,7 +5,8 @@ from sklearn import datasets
 from IMLearn.metrics import mean_square_error
 from IMLearn.utils import split_train_test
 from IMLearn.model_selection import cross_validate
-from IMLearn.learners.regressors import PolynomialFitting, LinearRegression, RidgeRegression
+from IMLearn.learners.regressors import PolynomialFitting, LinearRegression, \
+    RidgeRegression
 from sklearn.linear_model import Lasso
 
 from utils import *
@@ -25,9 +26,33 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     noise: float, default = 5
         Noise level to simulate in responses
     """
+
     # Question 1 - Generate dataset for model f(x)=(x+3)(x+2)(x+1)(x-1)(x-2) + eps for eps Gaussian noise
     # and split into training- and testing portions
-    raise NotImplementedError()
+    def response(x):
+        return (x + 3) * (x + 2) * (x + 1) * (x - 1) * (x - 2)
+
+    X = np.linspace(-1.2, 2, n_samples)
+    y_noiseless = response(X)
+    y = y_noiseless + np.random.normal(scale=noise, size=n_samples)
+
+    train_X, train_y, test_X, test_y = split_train_test(pd.DataFrame(X),
+                                                        pd.Series(y),
+                                                        train_proportion=2 / 3.0)
+    train_X = train_X.to_numpy().flatten()
+    train_y = train_y.to_numpy().flatten()
+    test_X = test_X.to_numpy().flatten()
+    test_y = test_y.to_numpy().flatten()
+
+    fig = go.Figure()
+    fig.add_traces(
+        [go.Scatter(x=X, y=y_noiseless, mode="markers", name="Real Points",
+                    marker=dict(color="black", opacity=.7)),
+         go.Scatter(x=train_X, y=train_y, mode="markers", name="Train",
+                    marker=dict(color="red", opacity=.7)),
+         go.Scatter(x=test_X, y=test_y, mode="markers", name="Test",
+                    marker=dict(color="blue", opacity=.7))])
+    fig.update_layout(title=r"$\text{(1) Splitted Sample Points}$").show()
 
     # Question 2 - Perform CV for polynomial fitting with degrees 0,1,...,10
     raise NotImplementedError()
@@ -36,7 +61,8 @@ def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
     raise NotImplementedError()
 
 
-def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 500):
+def select_regularization_parameter(n_samples: int = 50,
+                                    n_evaluations: int = 500):
     """
     Using sklearn's diabetes dataset use cross-validation to select the best fitting regularization parameter
     values for Ridge and Lasso regressions
@@ -61,4 +87,5 @@ def select_regularization_parameter(n_samples: int = 50, n_evaluations: int = 50
 
 if __name__ == '__main__':
     np.random.seed(0)
+    select_polynomial_degree()
     raise NotImplementedError()
