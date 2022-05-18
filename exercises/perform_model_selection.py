@@ -101,18 +101,64 @@ def select_regularization_parameter(n_samples: int = 50,
         Number of regularization parameter values to evaluate for each of the algorithms
     """
     # Question 6 - Load diabetes dataset and split into training and testing portions
-    raise NotImplementedError()
+    X, y = datasets.load_diabetes(return_X_y=True,
+                                  as_frame=True)
+    train_X, train_y, test_X, test_y = split_train_test(X, y,
+                                                        n_samples / float(
+                                                            len(y)))
+
+    train_X = train_X.to_numpy()
+    train_y = train_y.to_numpy()
+    test_X = test_X.to_numpy()
+    test_y = test_y.to_numpy()
 
     # Question 7 - Perform CV for different values of the regularization parameter for Ridge and Lasso regressions
-    raise NotImplementedError()
+    models = {
+        "Ridge": (RidgeRegression, np.linspace(0.001, 0.5, n_evaluations)),
+        "Lasso": (Lasso, np.linspace(0, 1, n_evaluations))}
+    best_lambdas = {"Ridge": 0, "Lasso": 0}
+    for name, (model, space) in models.items():
+        train_errors = []
+        validation_errors = []
+        for lam in space:
+            train_error, val_error = cross_validate(model(lam),
+                                                    train_X,
+                                                    train_y,
+                                                    mean_square_error)
+            train_errors.append(train_error)
+            validation_errors.append(val_error)
+        fig = go.Figure()
+        fig.add_traces(
+            [go.Scatter(x=space, y=train_errors,
+                        mode="markers+lines",
+                        name="Train Error",
+                        marker=dict(color="red", opacity=.7)),
+             go.Scatter(x=space, y=validation_errors,
+                        mode="markers+lines",
+                        name="Validation Error",
+                        marker=dict(color="blue", opacity=.7))])
+        fig.update_layout(
+            title=f"$\\text{{Error as a Function of }} \lambda \\text{{ in model {name}}}$",
+            xaxis=dict(title="$\lambda$"),
+            yaxis=dict(title="Error", type="log"),
+            width=800).show()
+        best_lambdas[name] = space[np.array(validation_errors).argmin()]
+        print(
+            f"Best lambda on validation error for {name} is: {best_lambdas[name]}")
 
     # Question 8 - Compare best Ridge model, best Lasso model and Least Squares model
-    raise NotImplementedError()
+    models = {"Ridge": RidgeRegression(best_lambdas["Ridge"]),
+              "Lasso": Lasso(best_lambdas["Lasso"]),
+              "Least Squares": LinearRegression()}
+    for name, model in models.items():
+        models[name].fit(train_X, train_y)
+        print(
+            f"Test Error for Model {name} is: {mean_square_error(test_y, model.predict(test_X))}")
 
 
 if __name__ == '__main__':
     np.random.seed(0)
-    select_polynomial_degree()
-    select_polynomial_degree(noise=0)
-    select_polynomial_degree(n_samples=1500, noise=10)
-    raise NotImplementedError()
+    # select_polynomial_degree()
+    # select_polynomial_degree(noise=0)
+    # select_polynomial_degree(n_samples=1500, noise=10)
+    select_regularization_parameter()
