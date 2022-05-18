@@ -158,7 +158,7 @@ def select_regularization_parameter(n_samples: int = 50,
 
 if __name__ == '__main__':
     np.random.seed(0)
-    # select_polynomial_degree()
-    # select_polynomial_degree(noise=0)
-    # select_polynomial_degree(n_samples=1500, noise=10)
+    select_polynomial_degree()
+    select_polynomial_degree(noise=0)
+    select_polynomial_degree(n_samples=1500, noise=10)
     select_regularization_parameter()
