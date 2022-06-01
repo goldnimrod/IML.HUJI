@@ -43,9 +43,11 @@ def cross_validate(estimator: BaseEstimator, X: np.ndarray, y: np.ndarray,
     validation_scores = []
 
     for k in range(cv):
-        k_estimator = estimator.fit(X[~folds[k]], y[~folds[k]])
+        X_train = np.delete(X, folds[k], axis=0)
+        y_train = np.delete(y, folds[k])
+        k_estimator = estimator.fit(X_train, y_train)
         train_scores.append(
-            scoring(y[~folds[k]], k_estimator.predict(X[~folds[k]])))
+            scoring(y_train, k_estimator.predict(X_train)))
         validation_scores.append(
             scoring(y[folds[k]], k_estimator.predict(X[folds[k]])))
 

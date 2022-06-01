@@ -1,6 +1,4 @@
 from __future__ import annotations
-import numpy as np
-import pandas as pd
 from sklearn import datasets
 from IMLearn.metrics import mean_square_error
 from IMLearn.utils import split_train_test
@@ -8,10 +6,11 @@ from IMLearn.model_selection import cross_validate
 from IMLearn.learners.regressors import PolynomialFitting, LinearRegression, \
     RidgeRegression
 from sklearn.linear_model import Lasso
-
 from utils import *
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
+
+pio.templates.default = "simple_white"
+pio.renderers.default = "browser"
 
 
 def select_polynomial_degree(n_samples: int = 100, noise: float = 5):
@@ -114,8 +113,8 @@ def select_regularization_parameter(n_samples: int = 50,
 
     # Question 7 - Perform CV for different values of the regularization parameter for Ridge and Lasso regressions
     models = {
-        "Ridge": (RidgeRegression, np.linspace(0.001, 0.5, n_evaluations)),
-        "Lasso": (Lasso, np.linspace(0, 1, n_evaluations))}
+        "Ridge": (RidgeRegression, np.linspace(0.001, 1, n_evaluations)),
+        "Lasso": (Lasso, np.linspace(0.001, 1, n_evaluations))}
     best_lambdas = {"Ridge": 0, "Lasso": 0}
     for name, (model, space) in models.items():
         train_errors = []
@@ -161,4 +160,5 @@ if __name__ == '__main__':
     select_polynomial_degree()
     select_polynomial_degree(noise=0)
     select_polynomial_degree(n_samples=1500, noise=10)
+    np.random.seed(0)
     select_regularization_parameter()
