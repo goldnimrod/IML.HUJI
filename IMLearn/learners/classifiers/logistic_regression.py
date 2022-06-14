@@ -1,10 +1,13 @@
 from typing import NoReturn
-
 import numpy as np
 
 from IMLearn import BaseEstimator
 from IMLearn.desent_methods import GradientDescent
-from IMLearn.desent_methods.modules import LogisticModule, RegularizedModule, L1, L2
+from IMLearn.desent_methods.modules import LogisticModule, RegularizedModule, \
+    L1, L2
+from IMLearn.metrics import misclassification_error
+
+PENALTY_NAME_TO_MODULE = {"l1": L1, "l2": L2}
 
 
 class LogisticRegression(BaseEstimator):
@@ -48,7 +51,15 @@ class LogisticRegression(BaseEstimator):
         Fits model using specified `self.optimizer_` passed when instantiating class and includes an intercept
         if specified by `self.include_intercept_
         """
-        raise NotImplementedError()
+        start_weights = np.random.normal(size=X.shape[1])
+        if self.penalty_ == "none":
+            f = LogisticModule(start_weights)
+        else:
+            f = RegularizedModule(LogisticModule(),
+                                  PENALTY_NAME_TO_MODULE[self.penalty_](),
+                                  self.lam_, start_weights,
+                                  self.include_intercept_)
+        self.coefs_ = self.solver_.fit(f, X, y)
 
     def _predict(self, X: np.ndarray) -> np.ndarray:
         """
@@ -64,7 +75,7 @@ class LogisticRegression(BaseEstimator):
         responses : ndarray of shape (n_samples, )
             Predicted responses of given samples
         """
-        raise NotImplementedError()
+        return np.where(self.predict_proba(X) <= self.alpha_, 0, 1)
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
         """
@@ -80,7 +91,7 @@ class LogisticRegression(BaseEstimator):
         probabilities: ndarray of shape (n_samples,)
             Probability of each sample being classified as `1` according to the fitted model
         """
-        raise NotImplementedError()
+        return 1 / (1 + np.exp(-X * self.coefs_))
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
@@ -99,4 +110,4 @@ class LogisticRegression(BaseEstimator):
         loss : float
             Performance under misclassification error
         """
-        raise NotImplementedError()
+        return misclassification_error(y, self.predict(X))
