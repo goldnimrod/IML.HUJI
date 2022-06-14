@@ -9,6 +9,7 @@ from IMLearn.learners.classifiers.logistic_regression import LogisticRegression
 from IMLearn.utils import split_train_test
 
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import plotly.express as px
 
 
@@ -102,7 +103,11 @@ def compare_fixed_learning_rates(
         init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
         etas: Tuple[float] = (1, .1, .01, .001)):
     for module_name, module in {"L1": L1, "L2": L2}.items():
-        for eta in etas:
+        fig = make_subplots(rows=2, cols=2,
+                            subplot_titles=[f"Step Size = {eta}"
+                                            for eta in etas],
+                            horizontal_spacing=0.07, vertical_spacing=0.15)
+        for i, eta in enumerate(etas):
             f = module(init)
             callback, vals, weights = get_gd_state_recorder_callback()
             gd = GradientDescent(learning_rate=FixedLR(eta), callback=callback)
@@ -110,29 +115,58 @@ def compare_fixed_learning_rates(
             plot = plot_descent_path(module, np.vstack(weights),
                                      title=f"{module_name} - Step Size = {eta}")
             plot.show()
-            fig = go.Figure(
-                [go.Scatter(x=np.arange(len(vals)), y=np.concatenate(vals))])
-            fig.update_layout(
-                title=f"Norm as a function of GD iteration - {module_name} - Step Size = {eta}",
-                xaxis=dict(title="iteration"),
-                yaxis=dict(title="Norm"))
-            fig.show()
+            fig.add_traces(
+                [go.Scatter(x=np.arange(len(vals)), y=np.concatenate(vals))],
+                rows=i // 2 + 1, cols=i % 2 + 1)
+
             print(f"min objective in {module_name} with step size of {eta} is "
                   f"{np.min(np.concatenate(vals))}")
+
+        fig.update_layout(
+            title={
+                "text": f"Norm as a function of GD iteration - {module_name}",
+                "x": 0.5, "xanchor": "center"}, showlegend=False)
+        fig.show()
 
 
 def compare_exponential_decay_rates(
         init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
         eta: float = .1,
         gammas: Tuple[float] = (.9, .95, .99, 1)):
+    fig = go.Figure()
     # Optimize the L1 objective using different decay-rate values of the exponentially decaying learning rate
-    raise NotImplementedError()
+    for gamma in gammas:
+        f = L1(init)
+        callback, vals, weights = get_gd_state_recorder_callback()
+        gd = GradientDescent(learning_rate=ExponentialLR(eta, gamma),
+                             callback=callback)
+        gd.fit(f=f, X=None, y=None)
+        fig.add_traces(
+            [go.Scatter(x=np.arange(len(vals)), y=np.concatenate(vals),
+                        name=gamma)])
+        print(f"min objective in L1 with start step of {eta} and decay rate of"
+              f" {gamma} is {np.min(np.concatenate(vals))}")
 
     # Plot algorithm's convergence for the different values of gamma
-    raise NotImplementedError()
+    fig.update_layout(
+        title=f"$\\text{{L1 norm as a Function of GD iteration: }} \eta = {eta}$",
+        xaxis=dict(title="iteration"),
+        yaxis=dict(title="L1 norm"),
+        legend_title="$\gamma$",
+        width=800)
+    fig.show()
 
     # Plot descent path for gamma=0.95
-    raise NotImplementedError()
+    gamma = 0.95
+    for module_name, module in {"L1": L1, "L2": L2}.items():
+        f = module(init)
+        callback, vals, weights = get_gd_state_recorder_callback()
+        gd = GradientDescent(learning_rate=ExponentialLR(eta, gamma),
+                             callback=callback)
+        gd.fit(f=f, X=None, y=None)
+        plot = plot_descent_path(L1, np.vstack(weights),
+                                 title=f"{module_name} on ExponentialLR with decay_rate = {gamma}")
+        plot.show()
 
 
 def load_data(path: str = "../datasets/SAheart.data",
@@ -185,4 +219,4 @@ if __name__ == '__main__':
     np.random.seed(0)
     compare_fixed_learning_rates()
     compare_exponential_decay_rates()
-    # fit_logistic_regression()
+    fit_logistic_regression()
