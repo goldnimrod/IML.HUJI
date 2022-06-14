@@ -9,6 +9,7 @@ from IMLearn.learners.classifiers.logistic_regression import LogisticRegression
 from IMLearn.utils import split_train_test
 
 import plotly.graph_objects as go
+import plotly.express as px
 
 
 def plot_descent_path(module: Type[BaseModule],
@@ -46,18 +47,22 @@ def plot_descent_path(module: Type[BaseModule],
     fig = plot_descent_path(IMLearn.desent_methods.modules.L1, np.ndarray([[1,1],[0,0]]))
     fig.show()
     """
+
     def predict_(w):
         return np.array([module(weights=wi).compute_output() for wi in w])
 
     from utils import decision_surface
-    return go.Figure([decision_surface(predict_, xrange=xrange, yrange=yrange, density=70, showscale=False),
-                      go.Scatter(x=descent_path[:, 0], y=descent_path[:, 1], mode="markers+lines", marker_color="black")],
+    return go.Figure([decision_surface(predict_, xrange=xrange, yrange=yrange,
+                                       density=70, showscale=False),
+                      go.Scatter(x=descent_path[:, 0], y=descent_path[:, 1],
+                                 mode="markers+lines", marker_color="black")],
                      layout=go.Layout(xaxis=dict(range=xrange),
                                       yaxis=dict(range=yrange),
                                       title=f"GD Descent Path {title}"))
 
 
-def get_gd_state_recorder_callback() -> Tuple[Callable[[], None], List[np.ndarray], List[np.ndarray]]:
+def get_gd_state_recorder_callback() -> Tuple[
+    Callable[[], None], List[np.ndarray], List[np.ndarray]]:
     """
     Callback generator for the GradientDescent class, recording the objective's value and parameters at each iteration
 
@@ -73,17 +78,53 @@ def get_gd_state_recorder_callback() -> Tuple[Callable[[], None], List[np.ndarra
     weights: List[np.ndarray]
         Recorded parameters
     """
-    raise NotImplementedError()
+
+    def callback(weights, val, **kwargs):
+        """
+        A callback that records the weights and objective values in each iteration
+
+        Parameters:
+        -----------
+            - weights: ndarray of shape specified by module's weights
+                    Current weights of objective
+            - val: ndarray of shape specified by module's compute_output function
+                Value of objective function at current point, over given data X, y
+        """
+        values_list.append(val)
+        weights_list.append(weights)
+
+    values_list = list()
+    weights_list = list()
+    return callback, values_list, weights_list
 
 
-def compare_fixed_learning_rates(init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
-                                 etas: Tuple[float] = (1, .1, .01, .001)):
-    raise NotImplementedError()
+def compare_fixed_learning_rates(
+        init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
+        etas: Tuple[float] = (1, .1, .01, .001)):
+    for module_name, module in {"L1": L1, "L2": L2}.items():
+        for eta in etas:
+            f = module(init)
+            callback, vals, weights = get_gd_state_recorder_callback()
+            gd = GradientDescent(learning_rate=FixedLR(eta), callback=callback)
+            gd.fit(f=f, X=None, y=None)
+            plot = plot_descent_path(module, np.vstack(weights),
+                                     title=f"{module_name} - Step Size = {eta}")
+            plot.show()
+            fig = go.Figure(
+                [go.Scatter(x=np.arange(len(vals)), y=np.concatenate(vals))])
+            fig.update_layout(
+                title=f"Norm as a function of GD iteration - {module_name} - Step Size = {eta}",
+                xaxis=dict(title="iteration"),
+                yaxis=dict(title="Norm"))
+            fig.show()
+            print(f"min objective in {module_name} with step size of {eta} is "
+                  f"{np.min(np.concatenate(vals))}")
 
 
-def compare_exponential_decay_rates(init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
-                                    eta: float = .1,
-                                    gammas: Tuple[float] = (.9, .95, .99, 1)):
+def compare_exponential_decay_rates(
+        init: np.ndarray = np.array([np.sqrt(2), np.e / 3]),
+        eta: float = .1,
+        gammas: Tuple[float] = (.9, .95, .99, 1)):
     # Optimize the L1 objective using different decay-rate values of the exponentially decaying learning rate
     raise NotImplementedError()
 
@@ -94,7 +135,8 @@ def compare_exponential_decay_rates(init: np.ndarray = np.array([np.sqrt(2), np.
     raise NotImplementedError()
 
 
-def load_data(path: str = "../datasets/SAheart.data", train_portion: float = .8) -> \
+def load_data(path: str = "../datasets/SAheart.data",
+              train_portion: float = .8) -> \
         Tuple[pd.DataFrame, pd.Series, pd.DataFrame, pd.Series]:
     """
     Load South-Africa Heart Disease dataset and randomly split into a train- and test portion
@@ -123,7 +165,8 @@ def load_data(path: str = "../datasets/SAheart.data", train_portion: float = .8)
     """
     df = pd.read_csv(path)
     df.famhist = (df.famhist == 'Present').astype(int)
-    return split_train_test(df.drop(['chd', 'row.names'], axis=1), df.chd, train_portion)
+    return split_train_test(df.drop(['chd', 'row.names'], axis=1), df.chd,
+                            train_portion)
 
 
 def fit_logistic_regression():
@@ -142,4 +185,4 @@ if __name__ == '__main__':
     np.random.seed(0)
     compare_fixed_learning_rates()
     compare_exponential_decay_rates()
-    fit_logistic_regression()
+    # fit_logistic_regression()

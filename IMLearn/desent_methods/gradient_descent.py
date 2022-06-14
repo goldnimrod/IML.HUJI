@@ -39,12 +39,14 @@ class GradientDescent:
         Callable function should receive as input a GradientDescent instance, and any additional
         arguments specified in the `GradientDescent.fit` function
     """
+
     def __init__(self,
                  learning_rate: BaseLR = FixedLR(1e-3),
                  tol: float = 1e-5,
                  max_iter: int = 1000,
                  out_type: str = "last",
-                 callback: Callable[[GradientDescent, ...], None] = default_callback):
+                 callback: Callable[
+                     [GradientDescent, ...], None] = default_callback):
         """
         Instantiate a new instance of the GradientDescent class
 
@@ -119,4 +121,50 @@ class GradientDescent:
                 Euclidean norm of w^(t)-w^(t-1)
 
         """
-        raise NotImplementedError()
+        solution_func = self.get_solution_func_()
+        return_weights = f.weights
+        best_obj_val = f.compute_output(X=X, y=y)
+        self.callback_(solver=self, weights=f.weights,
+                       val=best_obj_val, grad=0, t=0,
+                       eta=0, delta=0)
+
+        for t in range(self.max_iter_):
+            prev_weights = f.weights
+            grad = f.compute_jacobian(X=X, y=y)
+            eta = self.learning_rate_.lr_step(t=t)
+            f.weights = prev_weights - eta * grad
+            delta = np.linalg.norm(f.weights - prev_weights)
+            objective_val = f.compute_output(X=X, y=y)
+            self.callback_(solver=self, weights=f.weights,
+                           val=objective_val, grad=grad, t=t,
+                           eta=eta, delta=delta)
+            return_weights, best_obj_val = solution_func(weights=f.weights,
+                                                         f=f, t=t, X=X, y=y,
+                                                         prev_ret_weights=return_weights,
+                                                         best_obj_val=best_obj_val)
+            if delta < self.tol_:
+                return return_weights
+
+    def get_solution_func_(self):
+        """
+        Returns a function that calculates the solution according to self.out_type_
+
+        Returns
+        -------
+        A function that will calculate the solution in each iteration
+        """
+
+        func = None
+        if self.out_type_ == "last":
+            return lambda weights, **kwargs: (weights, None)
+        elif self.out_type_ == "best":
+            def func(weights, f, prev_ret_weights, best_obj_val,
+                     X, y, **kwargs):
+                current_objective_val = f.compute_output(X=X, y=y)
+                if current_objective_val < best_obj_val:
+                    return weights, current_objective_val
+                return prev_ret_weights, best_obj_val
+        elif self.out_type_ == "average":
+            def func(weights, prev_ret_weights, t, **kwargs):
+                return np.sum(weights, prev_ret_weights * (t - 1)) / t, None
+        return func
