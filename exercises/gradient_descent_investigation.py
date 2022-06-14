@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from typing import Tuple, List, Callable, Type
-from sklearn.metrics import roc_curve
+from sklearn.metrics import confusion_matrix
 
 from IMLearn import BaseModule
 from IMLearn.desent_methods import GradientDescent, FixedLR, ExponentialLR
@@ -207,26 +207,37 @@ def fit_logistic_regression():
     # Load and split SA Heard Disease dataset
     X_train, y_train, X_test, y_test = load_data()
 
-    # for alpha in np.linspace(0, 1, 101):
-    alpha = 0.5
-    model = LogisticRegression(alpha=alpha).fit(X_train.to_numpy(),
-                                                y_train.to_numpy())
+    model = LogisticRegression().fit(X_train.to_numpy(),
+                                     y_train.to_numpy())
+    fpr = []
+    tpr = []
+    thresholds = np.linspace(0, 1, 101)
+    for alpha in thresholds:
+        model.alpha_ = alpha
+        tn, fp, fn, tp = confusion_matrix(y_test,
+                                          model.predict(
+                                              X_test.to_numpy())).ravel()
+        fpr.append(fp / (fp + tn))
+        tpr.append(tp / (tp + fn))
 
-    fpr, tpr, thresholds = roc_curve(y_test.to_numpy(),
-                                     model.predict_proba(X_test.to_numpy()))
+    fpr = np.array(fpr)
+    tpr = np.array(tpr)
 
     go.Figure(
         data=[go.Scatter(x=[0, 1], y=[0, 1], mode="lines",
                          line=dict(color="black", dash='dash'),
                          name="Random Class Assignment"),
-              go.Scatter(x=fpr, y=tpr, mode='markers+lines', text=thresholds,
+              go.Scatter(x=fpr, y=tpr, mode='markers+lines',
+                         text=thresholds,
                          name="", showlegend=False, marker_size=5,
-                         marker_color=c[1][1],
                          hovertemplate="<b>Threshold:</b>%{text:.3f}<br>FPR: %{x:.3f}<br>TPR: %{y:.3f}")],
         layout=go.Layout(
             title=rf"$\text{{ROC Curve Of Fitted Model}}$",
             xaxis=dict(title=r"$\text{False Positive Rate (FPR)}$"),
-            yaxis=dict(title=r"$\text{True Positive Rate (TPR)}$")))
+            yaxis=dict(title=r"$\text{True Positive Rate (TPR)}$"))).show()
+
+    best_alpha = thresholds[np.argmax(tpr - fpr)]
+    print(f"best alpha is: {best_alpha}")
 
     # Plotting convergence rate of logistic regression over SA heart disease data
     raise NotImplementedError()
