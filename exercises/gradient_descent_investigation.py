@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from typing import Tuple, List, Callable, Type
+from sklearn.metrics import roc_curve
 
 from IMLearn import BaseModule
 from IMLearn.desent_methods import GradientDescent, FixedLR, ExponentialLR
@@ -10,7 +11,6 @@ from IMLearn.utils import split_train_test
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import plotly.express as px
 
 
 def plot_descent_path(module: Type[BaseModule],
@@ -207,6 +207,27 @@ def fit_logistic_regression():
     # Load and split SA Heard Disease dataset
     X_train, y_train, X_test, y_test = load_data()
 
+    # for alpha in np.linspace(0, 1, 101):
+    alpha = 0.5
+    model = LogisticRegression(alpha=alpha).fit(X_train.to_numpy(),
+                                                y_train.to_numpy())
+
+    fpr, tpr, thresholds = roc_curve(y_test.to_numpy(),
+                                     model.predict_proba(X_test.to_numpy()))
+
+    go.Figure(
+        data=[go.Scatter(x=[0, 1], y=[0, 1], mode="lines",
+                         line=dict(color="black", dash='dash'),
+                         name="Random Class Assignment"),
+              go.Scatter(x=fpr, y=tpr, mode='markers+lines', text=thresholds,
+                         name="", showlegend=False, marker_size=5,
+                         marker_color=c[1][1],
+                         hovertemplate="<b>Threshold:</b>%{text:.3f}<br>FPR: %{x:.3f}<br>TPR: %{y:.3f}")],
+        layout=go.Layout(
+            title=rf"$\text{{ROC Curve Of Fitted Model}}$",
+            xaxis=dict(title=r"$\text{False Positive Rate (FPR)}$"),
+            yaxis=dict(title=r"$\text{True Positive Rate (TPR)}$")))
+
     # Plotting convergence rate of logistic regression over SA heart disease data
     raise NotImplementedError()
 
@@ -217,6 +238,6 @@ def fit_logistic_regression():
 
 if __name__ == '__main__':
     np.random.seed(0)
-    compare_fixed_learning_rates()
-    compare_exponential_decay_rates()
+    # compare_fixed_learning_rates()
+    # compare_exponential_decay_rates()
     fit_logistic_regression()

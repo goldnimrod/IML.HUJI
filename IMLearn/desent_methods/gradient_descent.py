@@ -8,7 +8,7 @@ from .learning_rate import FixedLR
 OUTPUT_VECTOR_TYPE = ["last", "best", "average"]
 
 
-def default_callback(model: GradientDescent, **kwargs) -> NoReturn:
+def default_callback(solver: GradientDescent, **kwargs) -> NoReturn:
     pass
 
 

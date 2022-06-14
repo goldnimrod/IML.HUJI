@@ -139,8 +139,8 @@ class LogisticModule(BaseModule):
             a = np.dot(X[i, :], self.weights)
             return y[i] * a - np.log(1 + np.exp(a))
 
-        return - (1 / y.shape[0]) * np.sum(np.vectorize(func)(y.shape[0]),
-                                           keepdims=True)
+        return - (1 / y.shape[0]) * np.sum(
+            np.vectorize(func)(np.arange(y.shape[0])), keepdims=True)
 
     def compute_jacobian(self, X: np.ndarray, y: np.ndarray,
                          **kwargs) -> np.ndarray:
@@ -170,7 +170,7 @@ class LogisticModule(BaseModule):
                         y[j] * -sigmoid(X[j, i] * self.weights[i])))(
                     np.arange(y.shape[0])))
 
-        return np.vectorize(func)(np.arange(self.weights))
+        return np.vectorize(func)(np.arange(self.weights.shape[0]))
 
 
 class RegularizedModule(BaseModule):
