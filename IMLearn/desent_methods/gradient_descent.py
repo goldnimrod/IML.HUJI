@@ -39,12 +39,14 @@ class GradientDescent:
         Callable function should receive as input a GradientDescent instance, and any additional
         arguments specified in the `GradientDescent.fit` function
     """
+
     def __init__(self,
                  learning_rate: BaseLR = FixedLR(1e-3),
                  tol: float = 1e-5,
                  max_iter: int = 1000,
                  out_type: str = "last",
-                 callback: Callable[[GradientDescent, ...], None] = default_callback):
+                 callback: Callable[
+                     [GradientDescent, ...], None] = default_callback):
         """
         Instantiate a new instance of the GradientDescent class
 
@@ -142,6 +144,7 @@ class GradientDescent:
                                                          best_obj_val=best_obj_val)
             if delta < self.tol_:
                 return return_weights
+        return return_weights
 
     def get_solution_func_(self):
         """
