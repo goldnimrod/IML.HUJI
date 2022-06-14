@@ -134,13 +134,9 @@ class LogisticModule(BaseModule):
         output: ndarray of shape (1,)
             Value of function at point self.weights
         """
-
-        def func(i):
-            a = np.dot(X[i, :], self.weights)
-            return y[i] * a - np.log(1 + np.exp(a))
-
+        sigmoid_vector = 1 / (1 + np.exp(-X @ self.weights))
         return - (1 / y.shape[0]) * np.sum(
-            np.vectorize(func)(np.arange(y.shape[0])), keepdims=True)
+            y * np.log(sigmoid_vector) - np.log(1 + np.exp(X @ self.weights)))
 
     def compute_jacobian(self, X: np.ndarray, y: np.ndarray,
                          **kwargs) -> np.ndarray:
@@ -160,17 +156,8 @@ class LogisticModule(BaseModule):
         output: ndarray of shape (n_features,)
             Derivative of function with respect to self.weights at point self.weights
         """
-
-        def sigmoid(x):
-            return 1 / (1 + np.exp(-x))
-
-        def func(i):
-            return -(1 / y.shape[0]) * np.sum(
-                np.vectorize(lambda j: X[j, i] * (
-                        y[j] * -sigmoid(X[j, i] * self.weights[i])))(
-                    np.arange(y.shape[0])))
-
-        return np.vectorize(func)(np.arange(self.weights.shape[0]))
+        sigmoid_vector = 1 / (1 + np.exp(-X @ self.weights))
+        return - (1 / y.shape[0]) * np.dot(X.T, y - sigmoid_vector)
 
 
 class RegularizedModule(BaseModule):

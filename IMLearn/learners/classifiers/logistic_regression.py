@@ -132,7 +132,7 @@ class LogisticRegression(BaseEstimator):
         probabilities: ndarray of shape (n_samples,)
             Probability of each sample being classified as `1` according to the fitted model
         """
-        return 1 / (1 + np.exp(-X * self.coefs_))
+        return 1 / (1 + np.exp(-X @ self.coefs_))
 
     def _loss(self, X: np.ndarray, y: np.ndarray) -> float:
         """
