@@ -134,7 +134,7 @@ class LogisticModule(BaseModule):
         output: ndarray of shape (1,)
             Value of function at point self.weights
         """
-        sigmoid_vector = 1 / (1 + np.exp(-X @ self.weights))
+        sigmoid_vector = 1.0 / (1 + np.exp(-(X @ self.weights)))
         return - (1 / y.shape[0]) * np.sum(
             y * np.log(sigmoid_vector) - np.log(1 + np.exp(X @ self.weights)))
 
@@ -156,8 +156,8 @@ class LogisticModule(BaseModule):
         output: ndarray of shape (n_features,)
             Derivative of function with respect to self.weights at point self.weights
         """
-        sigmoid_vector = 1 / (1 + np.exp(-X @ self.weights))
-        return - (1 / y.shape[0]) * np.dot(X.T, y - sigmoid_vector)
+        sigmoid_vector = 1.0 / (1 + np.exp(-(X @ self.weights)))
+        return (1 / y.shape[0]) * X.T @ (sigmoid_vector - y)
 
 
 class RegularizedModule(BaseModule):
@@ -201,7 +201,8 @@ class RegularizedModule(BaseModule):
         if weights:
             self.weights(weights)
 
-    def compute_output(self, **kwargs) -> np.ndarray:
+    def compute_output(self, X: np.ndarray, y: np.ndarray,
+                       **kwargs) -> np.ndarray:
         """
         Compute the output value of the regularized objective function at point self.weights
 
@@ -215,9 +216,17 @@ class RegularizedModule(BaseModule):
         output: ndarray of shape (1,)
             Value of function at point self.weights
         """
-        self.fidelity_module_.compute_output() + self.lam_ * self.regularization_module_.compute_output()
+        if self.include_intercept_:
+            X_intercept = np.c_[np.ones(X.shape[0]), X]
+        else:
+            X_intercept = X
+        return (self.fidelity_module_.compute_output(X=X_intercept,
+                                                     y=y) +
+                self.lam_ * self.regularization_module_.compute_output(X=X,
+                                                                       y=y))
 
-    def compute_jacobian(self, **kwargs) -> np.ndarray:
+    def compute_jacobian(self, X: np.ndarray, y: np.ndarray,
+                         **kwargs) -> np.ndarray:
         """
         Compute module derivative with respect to self.weights at point self.weights
 
@@ -232,10 +241,17 @@ class RegularizedModule(BaseModule):
             Derivative with respect to self.weights at point self.weights
         """
         if self.include_intercept_:
-            return self.fidelity_module_.compute_jacobian() + self.lam_ * np.concatenate(
-                [np.array([0]),
-                 self.regularization_module_.compute_jacobian()])
-        return self.fidelity_module_.compute_jacobian() + self.lam_ * self.regularization_module_.compute_jacobian()
+            X_intercept = np.c_[np.ones(X.shape[0]), X]
+            return (self.fidelity_module_.compute_jacobian(X=X_intercept,
+                                                           y=y) +
+                    self.lam_ * np.concatenate([np.array([0]),
+                                                self.regularization_module_.compute_jacobian(
+                                                    X=X, y=y)]))
+        else:
+            return (self.fidelity_module_.compute_jacobian(X=X,
+                                                           y=y) +
+                    self.lam_ * self.regularization_module_.compute_jacobian(
+                        X=X, y=y))
 
     @property
     def weights(self):
