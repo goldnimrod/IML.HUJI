@@ -7,6 +7,8 @@ from IMLearn import BaseModule
 from IMLearn.desent_methods import GradientDescent, FixedLR, ExponentialLR
 from IMLearn.desent_methods.modules import L1, L2
 from IMLearn.learners.classifiers.logistic_regression import LogisticRegression
+from IMLearn.model_selection import cross_validate
+from IMLearn.metrics import misclassification_error
 from IMLearn.utils import split_train_test
 
 import plotly.graph_objects as go
@@ -206,17 +208,20 @@ def load_data(path: str = "../datasets/SAheart.data",
 def fit_logistic_regression():
     # Load and split SA Heard Disease dataset
     X_train, y_train, X_test, y_test = load_data()
+    X_train = X_train.to_numpy()
+    y_train = y_train.to_numpy()
+    X_test = X_test.to_numpy()
+    y_test = y_test.to_numpy()
 
-    model = LogisticRegression().fit(X_train.to_numpy(),
-                                     y_train.to_numpy())
+    model = LogisticRegression().fit(X_train, y_train)
     fpr = []
     tpr = []
     thresholds = np.linspace(0, 1, 101)
     for alpha in thresholds:
-        model.alpha_ = alpha
         tn, fp, fn, tp = confusion_matrix(y_test,
-                                          model.predict(
-                                              X_test.to_numpy())).ravel()
+                                          np.where(model.predict_proba(
+                                              X_test) <= alpha,
+                                                   0, 1)).ravel()
         fpr.append(fp / (fp + tn))
         tpr.append(tp / (tp + fn))
 
@@ -238,17 +243,33 @@ def fit_logistic_regression():
 
     best_alpha = thresholds[np.argmax(tpr - fpr)]
     print(f"best alpha is: {best_alpha}")
-
-    # Plotting convergence rate of logistic regression over SA heart disease data
-    raise NotImplementedError()
+    model.alpha_ = best_alpha
+    print(
+        f"test error on best alpha({best_alpha}): {model.loss(X_test, y_test)}")
 
     # Fitting l1- and l2-regularized logistic regression models, using cross-validation to specify values
     # of regularization parameter
-    raise NotImplementedError()
+    space = np.linspace(0.001, 10, 5)
+    for penalty in ["l1", "l2"]:
+        train_errors = []
+        validation_errors = []
+        for lam in space:
+            train_error, val_error = cross_validate(
+                LogisticRegression(penalty=penalty, lam=lam),
+                X_train, y_train, misclassification_error)
+            train_errors.append(train_error)
+            validation_errors.append(val_error)
+        best_lambda = space[np.array(validation_errors).argmin()]
+        print(
+            f"Best lambda on validation error for {penalty} is: {best_lambda}")
+        model = LogisticRegression(penalty=penalty, lam=best_lambda).fit(
+            X_train, y_train)
+        print(
+            f"test error on best lambda({best_lambda}) for {penalty}: {model.loss(X_test, y_test)}")
 
 
 if __name__ == '__main__':
     np.random.seed(0)
-    # compare_fixed_learning_rates()
-    # compare_exponential_decay_rates()
+    compare_fixed_learning_rates()
+    compare_exponential_decay_rates()
     fit_logistic_regression()
