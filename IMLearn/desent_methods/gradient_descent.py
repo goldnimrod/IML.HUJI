@@ -167,5 +167,6 @@ class GradientDescent:
                 return prev_ret_weights, best_obj_val
         elif self.out_type_ == "average":
             def func(weights, prev_ret_weights, t, **kwargs):
-                return np.sum(weights, prev_ret_weights * (t - 1)) / t, None
+                return np.sum([weights, prev_ret_weights * (t + 1)],
+                              axis=0) / (t + 2), None
         return func
