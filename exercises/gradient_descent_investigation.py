@@ -213,7 +213,9 @@ def fit_logistic_regression():
     X_test = X_test.to_numpy()
     y_test = y_test.to_numpy()
 
-    model = LogisticRegression().fit(X_train, y_train)
+    model = LogisticRegression(
+        solver=GradientDescent(learning_rate=FixedLR(1e-4),
+                               max_iter=20000)).fit(X_train, y_train)
     fpr = []
     tpr = []
     thresholds = np.linspace(0, 1, 101)
@@ -239,7 +241,8 @@ def fit_logistic_regression():
         layout=go.Layout(
             title=rf"$\text{{ROC Curve Of Fitted Model}}$",
             xaxis=dict(title=r"$\text{False Positive Rate (FPR)}$"),
-            yaxis=dict(title=r"$\text{True Positive Rate (TPR)}$"))).show()
+            yaxis=dict(title=r"$\text{True Positive Rate (TPR)}$"),
+            width=1000)).show()
 
     best_alpha = thresholds[np.argmax(tpr - fpr)]
     print(f"best alpha is: {best_alpha}")
@@ -270,6 +273,6 @@ def fit_logistic_regression():
 
 if __name__ == '__main__':
     np.random.seed(0)
-    compare_fixed_learning_rates()
-    compare_exponential_decay_rates()
+    # compare_fixed_learning_rates()
+    # compare_exponential_decay_rates()
     fit_logistic_regression()
