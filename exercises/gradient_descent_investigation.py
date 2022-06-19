@@ -220,9 +220,9 @@ def fit_logistic_regression():
     tpr = []
     thresholds = np.linspace(0, 1, 101)
     for alpha in thresholds:
-        tn, fp, fn, tp = confusion_matrix(y_test,
+        tn, fp, fn, tp = confusion_matrix(y_train,
                                           np.where(model.predict_proba(
-                                              X_test) <= alpha,
+                                              X_train) <= alpha,
                                                    0, 1)).ravel()
         fpr.append(fp / (fp + tn))
         tpr.append(tp / (tp + fn))
@@ -252,7 +252,8 @@ def fit_logistic_regression():
 
     # Fitting l1- and l2-regularized logistic regression models, using cross-validation to specify values
     # of regularization parameter
-    space = np.linspace(0.001, 10, 5)
+    space = np.array([0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1])
+    np.random.seed(0)
     for penalty in ["l1", "l2"]:
         train_errors = []
         validation_errors = []
@@ -273,6 +274,6 @@ def fit_logistic_regression():
 
 if __name__ == '__main__':
     np.random.seed(0)
-    # compare_fixed_learning_rates()
-    # compare_exponential_decay_rates()
+    compare_fixed_learning_rates()
+    compare_exponential_decay_rates()
     fit_logistic_regression()
