@@ -213,9 +213,9 @@ def fit_logistic_regression():
     X_test = X_test.to_numpy()
     y_test = y_test.to_numpy()
 
-    model = LogisticRegression(
-        solver=GradientDescent(learning_rate=FixedLR(1e-4),
-                               max_iter=20000)).fit(X_train, y_train)
+    solver = GradientDescent(learning_rate=FixedLR(1e-4), max_iter=20000)
+
+    model = LogisticRegression(solver=solver).fit(X_train, y_train)
     fpr = []
     tpr = []
     thresholds = np.linspace(0, 1, 101)
@@ -252,18 +252,20 @@ def fit_logistic_regression():
 
     # Fitting l1- and l2-regularized logistic regression models, using cross-validation to specify values
     # of regularization parameter
-    space = np.array([0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1])
-    np.random.seed(0)
+    lambdas = np.array([0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1])
     for penalty in ["l1", "l2"]:
+        np.random.seed(0)
         train_errors = []
         validation_errors = []
-        for lam in space:
+        for lam in lambdas:
             train_error, val_error = cross_validate(
-                LogisticRegression(penalty=penalty, lam=lam),
+                LogisticRegression(penalty=penalty, lam=lam,
+                                   solver=GradientDescent(
+                                       learning_rate=FixedLR(1e-4))),
                 X_train, y_train, misclassification_error)
             train_errors.append(train_error)
             validation_errors.append(val_error)
-        best_lambda = space[np.array(validation_errors).argmin()]
+        best_lambda = lambdas[np.array(validation_errors).argmin()]
         print(
             f"Best lambda on validation error for {penalty} is: {best_lambda}")
         model = LogisticRegression(penalty=penalty, lam=best_lambda).fit(
@@ -274,6 +276,6 @@ def fit_logistic_regression():
 
 if __name__ == '__main__':
     np.random.seed(0)
-    compare_fixed_learning_rates()
-    compare_exponential_decay_rates()
+    # compare_fixed_learning_rates()
+    # compare_exponential_decay_rates()
     fit_logistic_regression()
